@@ -1,0 +1,427 @@
+@font-face {
+  font-family: OpenSans-Regular;
+  src: url('../fonts/OpenSans-SemiBold.ttf');
+}
+
+* {
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+}
+
+body,
+html {
+  height: 100%;
+  font-family: sans-serif;
+}
+
+a {
+  margin: 0px;
+  transition: all 0.4s;
+  -webkit-transition: all 0.4s;
+  -o-transition: all 0.4s;
+  -moz-transition: all 0.4s;
+}
+
+a:focus {
+  outline: none !important;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0px;
+}
+
+p {
+  margin: 0px;
+}
+
+ul,
+li {
+  margin: 0px;
+  list-style-type: none;
+}
+
+
+input {
+  display: block;
+  outline: none;
+  border: none !important;
+}
+
+textarea {
+  display: block;
+  outline: none;
+}
+
+textarea:focus,
+input:focus {
+  border-color: transparent !important;
+}
+
+button {
+  outline: none !important;
+  border: none;
+  background: transparent;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+iframe {
+  border: none !important;
+}
+
+.limiter {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.container-table100 {
+  width: 100%;
+  min-height: 100vh;
+  background: #c850c0;
+  background: -webkit-linear-gradient(45deg, #4158d0, #c850c0);
+  background: -o-linear-gradient(45deg, #4158d0, #c850c0);
+  background: -moz-linear-gradient(45deg, #4158d0, #c850c0);
+  background: linear-gradient(45deg, #4158d0, #c850c0);
+
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 33px 30px;
+}
+
+.wrap-table100 {
+  width: 1170px;
+}
+
+.table100 {
+  width: 100%;
+  margin-top: 20px;
+  border-spacing: 1;
+  border-collapse: separate;
+  background: white;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+  table-layout: fixed;
+}
+
+.table100-head th {
+  font-family: OpenSans-Regular;
+  font-size: 18px;
+  color: #fff;
+  line-height: 1.2;
+  font-weight: unset;
+  background: #00812b;
+  padding: 12px 8px;
+  text-align: center;
+  border-bottom: 2px solid #fff;
+}
+
+/* İlk ve son başlık hücresine radius ekleme */
+.table100-head th:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 0;
+}
+
+.table100-head th:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 0;
+}
+
+.table100-body td {
+  font-family: OpenSans-Regular;
+  font-size: 15px;
+  color: #808080;
+  line-height: 1.2;
+  font-weight: unset;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+/* Tek ve çift satır renkleri */
+#data-table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+#data-table tbody tr:nth-child(even) {
+    background-color: #f5f5f5;
+}
+
+/* Hover efekti */
+#data-table tbody tr:hover {
+    background-color: #e8e8e8 !important;
+}
+
+/* Sütun genişlikleri */
+.column1 { width: 4%; }   /* Sıra No */
+.column2 { width: 12%; }  /* Ürün Adı */
+.column3 { width: 8%; }   /* Ürün Kodu */
+.column4 { width: 8%; }   /* Muhasebe Kodu */
+.column5 { width: 7%; }  /* Açıklama */
+.column6 { width: 5%; }   /* Adet */
+.column7 { width: 5%; }   /* Asgari Adet */
+.column8 { width: 5%; }   /* Birim */
+.column9 { width: 5%; }   /* Raf No */
+.column10 { width: 7%; }  /* Marka */
+.column11 { width: 7%; }  /* Oluşturulma */
+.column12 { width: 7%; }  /* Güncellenme */
+.column13 { width: 7%; min-width: 100px; padding-right: 0; } /* İşlemler */
+.column14 { width: 8%}
+
+/* Hücre içeriği taşması durumunda ... ile göster */
+.table100-body td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+/* Ürün Adı ve Açıklama sütunları için özel stil */
+.column2, .column5 {
+  white-space: normal;
+  min-width: 200px;
+}
+
+/* Tüm sütunlar için ortalama */
+.column1, .column2, .column3, .column4, .column5, .column6, .column7, .column8, .column9, .column10, .column11, .column12, .column13 {
+    text-align: center;
+}
+
+/* İşlem butonları için stil */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  margin: 0 2px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  color: #212529;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.table100 tbody td {
+  height: 100%;
+}
+
+
+
+/* Tablo responsive yapısı */
+@media screen and (max-width: 992px) {
+  .table100 {
+    display: block;
+    width: 100%;
+  }
+  
+  .table100-body {
+    display: block;
+    width: 100%;
+  }
+  
+  .table100-body tr {
+    display: block;
+    width: 100%;
+  }
+  
+  .table100-body td {
+    display: block;
+    text-align: right;
+    padding: 10px;
+    position: relative;
+    padding-left: 50%;
+  }
+  
+  .table100-body td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    width: 45%;
+    padding-right: 10px;
+    text-align: left;
+    font-weight: bold;
+  }
+}
+
+@media (max-width: 576px) {
+  .container-table100 {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+/* Ürün Çıkış butonu için stil */
+.urun-cikis-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 24px;
+    min-width: 160px;
+    background: linear-gradient(135deg, #00812b 0%, #006622 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 129, 43, 0.15);
+    margin-left: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.urun-cikis-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    transition: all 0.3s ease;
+}
+
+.urun-cikis-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 129, 43, 0.25);
+    background: linear-gradient(135deg, #009933 0%, #007a29 100%);
+}
+
+.urun-cikis-btn:hover::after {
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+}
+
+.urun-cikis-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 129, 43, 0.2);
+}
+
+.urun-cikis-btn i {
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.urun-cikis-btn:hover i {
+    transform: scale(1.1);
+}
+
+.urun-cikis-btn span {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Uyarı durumları */
+#data-table tbody tr.stok-kritik {
+    background-color: #ffebee !important;
+}
+
+#data-table tbody tr.stok-uyari {
+    background-color: #fff3e0 !important;
+}
+
+/* Uyarı durumlarında hover */
+#data-table tbody tr.stok-kritik:hover {
+    background-color: #ffcdd2 !important;
+}
+
+#data-table tbody tr.stok-uyari:hover {
+    background-color: #ffe0b2 !important;
+}
+
+/* Uyarı İkonu Stilleri */
+.warning-icon-container {
+    display: inline-block;
+    margin-right: 8px;
+    position: relative;
+}
+
+.warning-icon {
+    color: #dc3545;
+    font-size: 1.2rem;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Tooltip Stilleri */
+.warning-icon-container:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+.warning-icon-container:hover::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% - 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #dc3545 transparent transparent transparent;
+    z-index: 1000;
+}
+
+/* Tablo gövdesinin üstüne çizgi ekle */
+#data-table tbody {
+  border-top: 2px solid #fff;
+}

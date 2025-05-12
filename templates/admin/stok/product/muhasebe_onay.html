@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <h2>Muhasebe Programından Ürün Ekleme/Güncelleme</h2>
+        
+        <div class="alert alert-info">
+            <p><strong>Bilgi:</strong> Muhasebe programından toplam {{ mevcut_urun_sayisi }} adet mevcut ürün ve {{ yeni_urun_sayisi }} adet yeni ürün bulundu.</p>
+        </div>
+
+        {% if mevcut_urunler %}
+        <div class="alert alert-warning">
+            <h3>Mevcut Ürünler (İlk 10 ürün gösteriliyor):</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ürün Kodu</th>
+                        <th>Mevcut Ürün Adı</th>
+                        <th>Yeni Ürün Adı</th>
+                        <th>Muhasebe Kodu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for urun in mevcut_urunler %}
+                    <tr>
+                        <td>{{ urun.urun_kodu }}</td>
+                        <td>{{ urun.urun_adi }}</td>
+                        <td>{{ urun.urun_adi }}</td>
+                        <td>{{ urun.muhasebe_kodu }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                {{ form.onay.label_tag }}
+                {{ form.onay }}
+                {% if form.onay.errors %}
+                <div class="errorlist">
+                    {{ form.onay.errors }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="submit-row">
+                <input type="submit" value="Onayla ve Devam Et" class="default" name="_save">
+                <a href="{% url 'admin:stok_product_changelist' %}" class="button cancel-link">İptal</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+    .alert-info {
+        color: #31708f;
+        background-color: #d9edf7;
+        border-color: #bce8f1;
+    }
+    .alert-warning {
+        color: #8a6d3b;
+        background-color: #fcf8e3;
+        border-color: #faebcc;
+    }
+    .table {
+        width: 100%;
+        margin-bottom: 1rem;
+        background-color: transparent;
+        border-collapse: collapse;
+    }
+    .table th,
+    .table td {
+        padding: 0.75rem;
+        vertical-align: top;
+        border-top: 1px solid #dee2e6;
+    }
+    .table thead th {
+        vertical-align: bottom;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .form-row {
+        padding: 4px 0;
+        margin-bottom: 20px;
+    }
+    .submit-row {
+        padding: 12px 14px;
+        margin: 0 0 20px;
+        background: #f8f8f8;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        text-align: right;
+        overflow: hidden;
+    }
+    .submit-row input {
+        margin: 0 0 0 8px;
+    }
+    .cancel-link {
+        display: inline-block;
+        vertical-align: middle;
+        height: 15px;
+        line-height: 15px;
+        background: #ba2121;
+        color: #fff;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin: 0 0 0 8px;
+        text-decoration: none;
+    }
+</style>
+{% endblock %} 

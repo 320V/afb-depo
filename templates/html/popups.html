@@ -1,0 +1,324 @@
+<!-- Login Popup -->
+<div class="modal fade" id="loginPopup" tabindex="-1" aria-labelledby="loginPopupLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginPopupLabel">Giriş Yap</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm" method="post" action="{% url 'admin:login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Kullanıcı Adı</label>
+                        <input type="text" class="form-control" id="id_username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Şifre</label>
+                        <input type="password" class="form-control" id="id_password" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Giriş Yap</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ürün Çıkış Popup -->
+<div class="modal fade" id="urunCikisPopup" tabindex="-1" aria-labelledby="urunCikisPopupLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="urunCikisPopupLabel">Ürün Çıkış</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="urunCikisForm">
+                    <div class="column-headers mb-2">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <span class="fw-bold">Ürün Adı</span>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="fw-bold">Ürün Kodu</span>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="fw-bold">Ürün Adedi</span>
+                            </div>
+                            <div class="col-md-1">
+                                <!-- Boş sütun için alan -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="urunContainer">
+                        <div class="urun-item mb-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <select class="form-select urun-adi select2" required>
+                                        <option value="">Ürün Adı Seçin</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select urun-kodu select2" required>
+                                        <option value="">Ürün Kodu Seçin</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control adet" min="1" required>
+                                </div>
+                                <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                    <button type="button" class="btn btn-danger btn-sm urun-sil" style="display: none;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end mb-3">
+                        <button type="button" class="btn btn-success btn-sm" id="urunEkle">
+                            <i class="fas fa-plus"></i> Ürün Ekle
+                        </button>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="total-quantity">
+                            <span class="fw-bold">Toplam Çıkış Adet:</span>
+                            <span id="totalQuantity">0</span>
+                            <span>Adet</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Çıkış Yaptır</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urunContainer = document.getElementById('urunContainer');
+    const urunEkleBtn = document.getElementById('urunEkle');
+    const urunCikisForm = document.getElementById('urunCikisForm');
+    const totalQuantitySpan = document.getElementById('totalQuantity');
+
+    // Select2'yi başlat
+    function initSelect2(element) {
+        $(element).select2({
+            dropdownParent: $('#urunCikisPopup'),
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "Sonuç bulunamadı";
+                },
+                searching: function() {
+                    return "Aranıyor...";
+                }
+            },
+            placeholder: element.classList.contains('urun-adi') ? "Ürün Adı Seçin" : "Ürün Kodu Seçin",
+            theme: 'bootstrap-5',
+            selectionCssClass: 'select2--large',
+            dropdownCssClass: 'select2--large',
+            searchInputPlaceholder: 'Ürün Filtrele',
+            closeOnSelect: true,
+            minimumResultsForSearch: 0
+        });
+    }
+
+    // Toplam adeti güncelle
+    function updateTotalQuantity() {
+        let total = 0;
+        const adetInputs = document.querySelectorAll('.adet');
+        adetInputs.forEach(input => {
+            const value = parseInt(input.value) || 0;
+            total += value;
+        });
+        totalQuantitySpan.textContent = total;
+    }
+
+    // Tablodaki ürün verilerini al
+    function getUrunler() {
+        const urunler = [];
+        const rows = document.querySelectorAll('#data-table tbody tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            urunler.push({
+                id: row.dataset.urunId,
+                isim: cells[1].textContent.trim(),
+                kod: cells[2].textContent.trim(),
+                adet: parseInt(cells[4].textContent.trim())
+            });
+        });
+        
+        return urunler;
+    }
+
+    // Combobox'ları doldur
+    function populateComboboxes(select) {
+        const urunler = getUrunler();
+        const isUrunAdi = select.classList.contains('urun-adi');
+        
+        urunler.forEach(urun => {
+            const option = document.createElement('option');
+            option.value = isUrunAdi ? urun.isim : urun.kod;
+            option.textContent = isUrunAdi ? urun.isim : urun.kod;
+            option.dataset.urunId = urun.id;
+            option.dataset.urunAdi = urun.isim;
+            option.dataset.urunKodu = urun.kod;
+            select.appendChild(option);
+        });
+
+        initSelect2(select);
+
+        // Select2 değişiklik olayını dinle
+        $(select).on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const urunAdi = selectedOption.data('urunAdi');
+            const urunKodu = selectedOption.data('urunKodu');
+            
+            // Diğer select'i bul
+            const otherSelect = $(this).closest('.urun-item').find(isUrunAdi ? '.urun-kodu' : '.urun-adi');
+            
+            // Diğer select'teki değeri güncelle
+            if (isUrunAdi) {
+                otherSelect.val(urunKodu).trigger('change');
+            } else {
+                otherSelect.val(urunAdi).trigger('change');
+            }
+        });
+    }
+
+    // İlk satırın combobox'larını doldur
+    const ilkSatir = urunContainer.querySelector('.urun-item');
+    const urunAdiSelect = ilkSatir.querySelector('.urun-adi');
+    const urunKoduSelect = ilkSatir.querySelector('.urun-kodu');
+    populateComboboxes(urunAdiSelect);
+    populateComboboxes(urunKoduSelect);
+
+    // Ürün ekleme fonksiyonu
+    function urunEkle() {
+        const urunItem = document.createElement('div');
+        urunItem.className = 'urun-item mb-3';
+        urunItem.innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <select class="form-select urun-adi select2" required>
+                        <option value="">Ürün Adı Seçin</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select urun-kodu select2" required>
+                        <option value="">Ürün Kodu Seçin</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control adet" min="1" required>
+                </div>
+                <div class="col-md-1 d-flex align-items-center justify-content-center">
+                    <button type="button" class="btn btn-danger btn-sm urun-sil">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Combobox'ları doldur
+        const urunAdiSelect = urunItem.querySelector('.urun-adi');
+        const urunKoduSelect = urunItem.querySelector('.urun-kodu');
+        populateComboboxes(urunAdiSelect);
+        populateComboboxes(urunKoduSelect);
+
+        // Adet input değişikliğini dinle
+        const adetInput = urunItem.querySelector('.adet');
+        adetInput.addEventListener('input', updateTotalQuantity);
+
+        // Silme butonu işlevi
+        urunItem.querySelector('.urun-sil').addEventListener('click', function() {
+            if (urunContainer.children.length > 1) {
+                const selects = urunItem.querySelectorAll('.select2');
+                selects.forEach(select => {
+                    if ($(select).data('select2')) {
+                        $(select).select2('destroy');
+                    }
+                });
+                urunItem.remove();
+                updateTotalQuantity();
+            }
+        });
+
+        urunContainer.appendChild(urunItem);
+    }
+
+    // İlk satırın adet input değişikliğini dinle
+    const ilkAdetInput = ilkSatir.querySelector('.adet');
+    ilkAdetInput.addEventListener('input', updateTotalQuantity);
+
+    // Ürün ekleme butonu işlevi
+    urunEkleBtn.addEventListener('click', urunEkle);
+
+    // Form gönderimi
+    urunCikisForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const urunler = [];
+        const urunItems = document.querySelectorAll('.urun-item');
+        
+        urunItems.forEach(item => {
+            const urunAdi = item.querySelector('.urun-adi').value;
+            const urunKodu = item.querySelector('.urun-kodu').value;
+            const adet = parseInt(item.querySelector('.adet').value);
+            
+            if (urunAdi && urunKodu && adet > 0) {
+                urunler.push({
+                    urun_adi: urunAdi,
+                    urun_kodu: urunKodu,
+                    adet: adet
+                });
+            }
+        });
+
+        if (urunler.length === 0) {
+            alert('Lütfen en az bir ürün seçin ve adet girin.');
+            return;
+        }
+
+        // API çağrısı
+        fetch('/stok/urun-cikis/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ urunler: urunler })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Ürün çıkışı başarıyla gerçekleştirildi.');
+                location.reload(); // Sayfayı yenile
+            } else {
+                alert(data.error || 'Bir hata oluştu.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Bir hata oluştu.');
+        });
+    });
+
+    // Popup kapandığında Select2'yi temizle
+    $('#urunCikisPopup').on('hidden.bs.modal', function () {
+        const selects = document.querySelectorAll('.select2');
+        selects.forEach(select => {
+            if ($(select).data('select2')) {
+                $(select).select2('destroy');
+            }
+        });
+        // Formu sıfırla
+        urunCikisForm.reset();
+        updateTotalQuantity();
+    });
+});
+</script> 

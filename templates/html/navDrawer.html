@@ -1,0 +1,115 @@
+{% load static %}
+
+<head></head>
+<link rel="stylesheet" href="{% static 'css/nav.css' %}">
+<link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+</head>
+<!-- Sidebar (Drawer) -->
+<aside class="sidebar">
+    <div class="toggle">
+        <a href="#" class="burger">
+            <span></span>
+        </a>
+    </div>
+    <div class="side-inner">
+        <div class="logo-container">
+            <img src="{% static 'assets/umay_logo.png' %}" alt="UMAY Logo" class="company-logo">
+        </div>
+
+        <div class="nav-menu">
+            <ul>
+                <li><a href="{% url 'home' %}"><i class="fas fa-home mr-3"></i>Ana Sayfa</a></li>
+                <li class="accordion">
+                    <a href="#" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
+                        aria-controls="collapseOne" class="collapsible">
+                        <i class="fas fa-warehouse mr-3"></i>Depo
+                    </a>
+                    <div id="collapseOne" class="collapse" aria-labelledby="headingOne">
+                        <div>
+                            <ul>
+                                <li><a href="{% url 'stok_listesi' %}"><i class="fas fa-boxes mr-3"></i>Ürünler</a></li>
+                                <li><a href="{% url 'admin:stok_product_add' %}"><i class="fas fa-plus-circle mr-3"></i>Yeni Ürün Ekle</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <li class="accordion">
+                    <a href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
+                        aria-controls="collapseTwo" class="collapsible">
+                        <i class="fas fa-sitemap mr-3"></i>Ürün Ağaçları
+                    </a>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo">
+                        <div>
+                            <ul>
+                                <li><a href="#"><i class="fas fa-project-diagram mr-3"></i>Ürün Ağaçlarını Görüntüle</a></li>
+                                <li><a href="#"><i class="fas fa-plus-circle mr-3"></i>Yeni Ürün Ağacı Oluştur</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <li><a href="#"><i class="fas fa-chart-bar mr-3"></i>İstatistikler</a></li>
+            </ul>
+        </div>
+
+        {% if not user.is_authenticated %}
+        <button class="login-btn" data-bs-toggle="modal" data-bs-target="#loginPopup">
+            <i class="fas fa-sign-in-alt"></i>
+            Giriş Yap
+        </button>
+        {% else %}
+        <div class="user-profile">
+            <div class="profile-info">
+                <div class="profile-image">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="profile-details">
+                    <div class="profile-name">
+                        {% if user.get_full_name %}
+                            {{ user.get_full_name }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </div>
+                    {% if user.profile.title %}
+                    <div class="profile-title">
+                        {{ user.profile.title }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="profile-actions">
+                <a href="{% url 'admin:logout' %}?next={{ request.path }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Çıkış Yap</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</aside>
+
+<script>
+  document.querySelector('.burger').addEventListener('click', function(e) {
+    e.preventDefault();
+    document.body.classList.toggle('show-sidebar');
+    this.classList.toggle('active');
+  });
+
+  document.querySelectorAll('.collapsible').forEach(function(element) {
+    element.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('data-target');
+      const target = document.querySelector(targetId);
+      
+      // Close all other menus
+      document.querySelectorAll('.collapse.show').forEach(function(collapse) {
+        if (collapse !== target) {
+          const bsCollapse = new bootstrap.Collapse(collapse);
+          bsCollapse.hide();
+        }
+      });
+    });
+  });
+</script>

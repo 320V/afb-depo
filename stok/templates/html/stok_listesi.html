@@ -1,0 +1,217 @@
+{% extends 'html/base.html' %}
+{% load static %}
+{% load stok_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}" class="breadcrumb-item">Depo</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="breadcrumb-item active">Ürünler</span>
+    </div>
+
+    <div class="table-filter-bar">
+        <select id="filter-column">
+            <option value="all">Tümü</option>
+            <option value="1">Ürün Adı</option>
+            <option value="2">Ürün Kodu</option>
+            <option value="3">Muhasebe Kodu</option>
+            <option value="4">Tedarikçi Kodu</option>
+            <option value="5">Açıklama</option>
+            <option value="6">Adet</option>
+            <option value="7">Asgari Adet</option>
+            <option value="8">Birim</option>
+            <option value="9">Raf No</option>
+            <option value="10">Marka</option>
+            <option value="11">Oluşturulma</option>
+            <option value="12">Güncellenme</option>
+        </select>
+        
+        <input type="text" id="table-filter-input" placeholder="Arama yapın veya filtreleyin... (Büyük/küçük harf duyarsız)">
+        
+        <button id="clear-filter" class="clear-button">
+            <i class="fa fa-times"></i>
+        </button>
+
+        <button class="btn btn-primary urun-cikis-btn" data-bs-toggle="modal" data-bs-target="#urunCikisPopup">
+            <i class="fas fa-box-open fa-lg"></i>
+            <span><br>Ürün Çıkış</span>
+        </button>
+    </div>
+
+    <div class="quick-filter-buttons" style="margin-top: 10px; text-align: center;">
+        <button class="btn btn-secondary" style="margin-right: 5px;" onclick="showAllProducts()">Tüm Ürünler</button>
+        <button class="btn btn-warning" style="margin-right: 5px;" onclick="showYellowWarnings()">Öncü Uyarı</button>
+        <button class="btn btn-danger" onclick="showRedWarnings()">Kritik Uyarı</button>
+    </div>
+
+    <div id="main">
+        <table id="data-table">
+            <thead>
+                <tr class="table100-head">
+                    <th class="column1">No</th>
+                    <th class="column2">Ürün Adı</th>
+                    <th class="column3">Ürün Kodu</th>
+                    <th class="column4">Muhasebe Kodu</th>
+                    <th class="column5">Tedarikçi</th>
+                    <th class="column6">Açıklama</th>
+                    <th class="column7">Adet</th>
+                    <th class="column8">Asgari</th>
+                    <th class="column9">Birim</th>
+                    <th class="column10">Raf</th>
+                    <th class="column11">Marka</th>
+                    {% if user.is_staff %}
+                    <th class="column12">Oluşturulma</th>
+                    {% endif %}
+                    <th class="column13">Güncellenme</th>
+                    <th class="column14" style="width: 200px;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr class="{% if product.adet <= product.asgari_adet %}stok-kritik{% elif product.adet <= product.asgari_adet|multiply:uyari_yuzdesi %}stok-uyari{% endif %}">
+                    <td class="column1">{{ forloop.counter }}</td>
+                    <td class="column2">{{ product.isim }}</td>
+                    <td class="column3">{{ product.urun_kodu }}</td>
+                    <td class="column4">{{ product.muhasebe_kodu }}</td>
+                    <td class="column5">{{ product.tedarikci_kodu|default:"-" }}</td>
+                    <td class="column6">{{ product.aciklama }}</td>
+                    <td class="column7">{{ product.adet }}</td>
+                    <td class="column8">{{ product.asgari_adet }}</td>
+                    <td class="column9">{{ product.birim }}</td>
+                    <td class="column10">{{ product.raf_no }}</td>
+                    <td class="column11">{{ product.marka }}</td>
+                    {% if user.is_staff %}
+                    <td class="column12">
+                        {{ product.olusturma_tarihi|date:"d.m.Y" }}<br>
+                        {{ product.olusturma_saat|time:"H:i" }}
+                    </td>
+                    {% endif %}
+                    <td class="column13">
+                        {{ product.guncelleme_tarihi|date:"d.m.Y" }}<br>
+                        {{ product.guncelleme_saat|time:"H:i" }}
+                    </td>
+                    <td class="column14">
+                        {% if user.is_authenticated %}
+                            {% if product.adet <= product.asgari_adet %}
+                            <div class="warning-icon-container" title="Kritik Stok Seviyesi!">
+                                <i class="fas fa-exclamation-circle warning-icon"></i>
+                            </div>
+                            {% endif %}
+                            <a href="{% url 'admin:stok_product_change' product.id %}" class="btn btn-warning btn-sm" title="Düzenle">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-info btn-sm" onclick="generateQRCode('{{ product.raf_no }}')" title="QR Kod Oluştur">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInput = document.getElementById('table-filter-input');
+    const filterColumn = document.getElementById('filter-column');
+    const clearButton = document.getElementById('clear-filter');
+    const table = document.getElementById('data-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+    // Filtreleme fonksiyonu
+    function filterTable() {
+        const filterValue = filterInput.value.toLowerCase();
+        const columnIndex = filterColumn.value === 'all' ? -1 : parseInt(filterColumn.value) - 1;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+            let found = false;
+
+            if (columnIndex === -1) {
+                // Tüm sütunlarda ara
+                for (let j = 0; j < cells.length; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.includes(filterValue)) {
+                        found = true;
+                        break;
+                    }
+                }
+            } else {
+                // Sadece seçili sütunda ara
+                const cellText = cells[columnIndex].textContent.toLowerCase();
+                found = cellText.includes(filterValue);
+            }
+
+            row.style.display = found ? '' : 'none';
+        }
+    }
+
+    // Filtreleme olaylarını dinle
+    filterInput.addEventListener('keyup', filterTable);
+    filterColumn.addEventListener('change', filterTable);
+
+    // Temizleme butonu işlevi
+    clearButton.addEventListener('click', function() {
+        filterInput.value = '';
+        filterColumn.value = 'all';
+        filterTable();
+    });
+});
+
+function showAllProducts() {
+    const rows = document.querySelectorAll('#data-table tbody tr');
+    rows.forEach(row => row.style.display = '');
+}
+
+function showYellowWarnings() {
+    const rows = document.querySelectorAll('#data-table tbody tr');
+    rows.forEach(row => {
+        if (row.classList.contains('stok-uyari')) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function showRedWarnings() {
+    const rows = document.querySelectorAll('#data-table tbody tr');
+    rows.forEach(row => {
+        if (row.classList.contains('stok-kritik')) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function generateQRCode(rafNo) {
+    if (!rafNo) {
+        alert('Raf bilgisi mevcut değil.');
+        return;
+    }
+    // Create a QR code
+    var qr = new QRious({
+        value: rafNo,
+        size: 200
+    });
+    
+    // Create a temporary link element
+    var link = document.createElement('a');
+    link.href = qr.toDataURL();
+    link.download = rafNo + '.png';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('QR kodu oluşturuldu ve kaydedilecek yeri seçin.');
+}
+</script>
+{% endblock %} 
