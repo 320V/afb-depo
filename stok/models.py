@@ -89,3 +89,9 @@ class UyariAyarlari(models.Model):
     def get_instance(cls):
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+class StokYonetimi(models.Model):
+    class Meta:
+        permissions = [
+            ("stok_mobil", "Stok Mobil Erişimi"),
+        ]

@@ -62,3 +62,87 @@ def urun_cikis(request):
         return JsonResponse({'success': False, 'error': 'Geçersiz JSON verisi.'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def stok_dus(request):
+    try:
+        data = json.loads(request.body)
+        urunler = data.get('urunler', [])
+        
+        if not urunler:
+            return JsonResponse({
+                'success': False,
+                'error': 'Ürün listesi boş.'
+            })
+        
+        sonuclar = []
+        hata = None
+        
+        for urun in urunler:
+            try:
+                urun_kodu = urun.get('urun_kodu')
+                adet = urun.get('adet')
+                
+                if not urun_kodu or not adet:
+                    hata = 'Ürün kodu ve adet bilgisi gereklidir.'
+                    break
+                
+                try:
+                    adet = int(adet)
+                    if adet <= 0:
+                        hata = 'Adet değeri pozitif bir sayı olmalıdır.'
+                        break
+                except ValueError:
+                    hata = 'Geçersiz adet değeri.'
+                    break
+                
+                # Ürünü bul
+                product = Product.objects.filter(urun_kodu=urun_kodu).first()
+                
+                if not product:
+                    hata = f'Ürün kodu "{urun_kodu}" olan ürün bulunamadı.'
+                    break
+                
+                # Stok kontrolü
+                if product.adet < adet:
+                    hata = f'{product.isim} ürünü için yeterli stok yok. Mevcut stok: {product.adet}'
+                    break
+                
+                # Stoktan düş
+                product.adet -= adet
+                product.save()
+                
+                sonuclar.append({
+                    'urun_kodu': urun_kodu,
+                    'urun_adi': product.isim,
+                    'dusulen_adet': adet,
+                    'kalan_stok': product.adet
+                })
+                
+            except Exception as e:
+                hata = str(e)
+                break
+        
+        if hata:
+            return JsonResponse({
+                'success': False,
+                'error': hata
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Toplam {len(sonuclar)} üründen stok düşüldü.',
+            'sonuclar': sonuclar
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Geçersiz JSON verisi.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
