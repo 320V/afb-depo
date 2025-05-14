@@ -5,4 +5,5 @@ urlpatterns = [
     path('', views.table_view, name='stok_listesi'),
     path('urun-cikis/', views.urun_cikis, name='urun_cikis'),
     path('stok-dus/', views.stok_dus, name='stok_dus'),
+    path('<int:urun_id>/adet/', views.urun_adet_to_id, name='urun_adet_to_id'),
 ]

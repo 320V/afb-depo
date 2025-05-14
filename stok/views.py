@@ -18,6 +18,10 @@ def table_view(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def urun_cikis(request):
+    """
+    Web arayüzündeki popup üzerinden ürün adı ve kodu seçilerek stoktan düşme yapan ve 
+    toplu çıkış işlemi gerçekleştiren bir fonksiyondur.
+    """
     try:
         data = json.loads(request.body)
         urunler = data.get('urunler', [])
@@ -66,6 +70,9 @@ def urun_cikis(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def stok_dus(request):
+    """
+    Ürün koduna göre stoktan düşme yapan ve her ürün için ayrı ayrı sonuç bilgisi döndüren bir API endpoint'tir.
+    """
     try:
         data = json.loads(request.body)
         urunler = data.get('urunler', [])
@@ -146,3 +153,31 @@ def stok_dus(request):
             'success': False,
             'error': str(e)
         })
+
+@require_http_methods(["GET"])
+def urun_adet_to_id(request, urun_id):
+    try:
+        # Ürünü ID'ye göre bul
+        product = Product.objects.filter(id=urun_id).first()
+        
+        if not product:
+            return JsonResponse({
+                'success': False,
+                'error': f'ID: {urun_id} olan ürün bulunamadı.'
+            }, status=404)
+        
+        return JsonResponse({
+            'success': True,
+            'urun': {
+                'id': product.id,
+                'isim': product.isim,
+                'urun_kodu': product.urun_kodu,
+                'adet': product.adet
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
