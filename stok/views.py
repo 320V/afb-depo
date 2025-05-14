@@ -289,12 +289,15 @@ def urun_listesi(request):
         urunler = []
         for product in products:
             urunler.append({
-                'id': product.id,
-                'isim': product.isim,
+                'urun_adi': product.isim,
                 'urun_kodu': product.urun_kodu,
+                'muhasebe_kodu': product.muhasebe_kodu,
+                'tedarikci_kodu': product.tedarikci_kodu,
+                'marka': product.marka,
+                'raf': product.raf_no,
                 'adet': product.adet,
-                'birim': product.birim if hasattr(product, 'birim') else None,
-                'kategori': product.kategori if hasattr(product, 'kategori') else None
+                'asgari': product.asgari_adet,
+                'birim': product.birim
             })
         
         return JsonResponse({
