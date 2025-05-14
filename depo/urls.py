@@ -7,4 +7,5 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='html/home.html'), name='home'),
     path('stok/', include('stok.urls')),
     path('accounts/', include('accounts.urls')),
+    path('agac/', include('agac.urls')),
 ]

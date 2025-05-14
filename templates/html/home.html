@@ -1,8 +1,111 @@
 {% extends 'html/base.html' %}
 {% load static %}
 
+{% block title %}Ana Sayfa{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center">ANA SAYFA</h1>
+<div class="container-fluid">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="text-center mb-5">
+                <div class="d-flex justify-content-center align-items-center gap-4 mb-4">
+                    <img src="{% static 'assets/afb_logo.png' %}" alt="AFB Logo" class="img-fluid" style="max-height: 120px;">
+                    <img src="{% static 'assets/umay_logo.png' %}" alt="Umay Logo" class="img-fluid" style="max-height: 120px;">
+                </div>
+                <h1 class="display-4 mb-3 text-center">Depo Yönetim Sistemi</h1>
+                <p class="lead text-muted mb-4">Ürün yönetimi ve stok takibi için detaylı çözümlemeler</p>
+                <p class="text-muted">Geliştirme aşamasındaki bu sistem, depo yönetimi, stok takibi, ürün yönetimi gibi birçok personel araçlarını içermektedir.</p>
+            </div>
+
+            {% if user.is_authenticated %}
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <div class="welcome-section mb-4">
+                        <i class="fas fa-user-circle fa-3x text-primary mb-3"></i>
+                        <h2 class="h3 mb-2">Hoş Geldiniz, {{ user.get_full_name|default:user.username }}</h2>
+                        {% if user.profile.title %}
+                        <p class="text-muted mb-4">{{ user.profile.title }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="quick-stats row g-4">
+                        <div class="col-6">
+                            <div class="stat-card p-3 rounded bg-light">
+                                <i class="fas fa-boxes fa-2x text-primary mb-2"></i>
+                                <h3 class="h5 mb-0">Ürünler</h3>
+                                <p class="small text-muted mb-0">Stok durumlarını görüntüleyin ve yönetin</p>
+                                <a href="{% url 'stok_listesi' %}" class="stretched-link"></a>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card p-3 rounded bg-light">
+                                <i class="fas fa-sitemap fa-2x text-primary mb-2"></i>
+                                <h3 class="h5 mb-0">Ürün Ağaçları</h3>
+                                <p class="small text-muted mb-0">Ürün hiyerarşilerini inceleyin</p>
+                                <a href="{% url 'agac:agac_listesi' %}" class="stretched-link"></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <div class="welcome-section mb-4">
+                        <i class="fas fa-lock fa-3x text-primary mb-3"></i>
+                        <h2 class="h3 mb-2">Hoş Geldiniz</h2>
+                        <p class="text-muted">Sistemi kullanmak için lütfen giriş yapın</p>
+                    </div>
+                    <button class="btn btn-primary btn-lg px-5" data-bs-toggle="modal" data-bs-target="#loginPopup">
+                        <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
+<style>
+.stat-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(87, 129, 243, 1);
+}
+
+.welcome-section {
+    padding: 2rem 0;
+}
+
+.quick-stats {
+    margin-top: 2rem;
+}
+
+.stat-card i {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.card {
+    border-radius: 1rem;
+}
+
+.btn-primary {
+    padding: 0.8rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
+
+.gap-4 {
+    gap: 1.5rem !important;
+}
+</style>
 {% endblock %}
