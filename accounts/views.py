@@ -56,6 +56,7 @@ def login_api(request):
                         'id': user.id,
                         'username': user.username,
                         'email': user.email,
+                        'full_name': user.get_full_name(),
                         'title': title,
                         'permissions': permissions,
                         'all_permissions': user_permissions

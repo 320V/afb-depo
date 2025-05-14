@@ -34,7 +34,7 @@ def urun_cikis(request):
                 # Ürün adı ve kodu ile eşleşen ilk ürünü bul
                 product = Product.objects.filter(
                     isim=urun['urun_adi'],
-                    urun_kodu=urun['urun_kodu']
+                    urun_kodu=urun['urun_kodu'].upper()
                 ).first()
                 
                 if not product:
@@ -66,6 +66,89 @@ def urun_cikis(request):
         return JsonResponse({'success': False, 'error': 'Geçersiz JSON verisi.'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def stok_artis(request):
+    """
+    Web arayüzündeki popup üzerinden ürün adı ve kodu seçilerek stoktan artış yapan ve 
+    toplu artış işlemi gerçekleştiren bir fonksiyondur.
+    """
+    try:
+        data = json.loads(request.body)
+        urunler = data.get('urunler', [])
+        
+        if not urunler:
+            return JsonResponse({
+                'success': False,
+                'error': 'Ürün listesi boş.'
+            })
+        
+        sonuclar = []
+        hata = None
+        
+        for urun in urunler:
+            try:
+                urun_kodu = urun.get('urun_kodu')
+                adet = urun.get('adet')
+                
+                if not urun_kodu or not adet:
+                    hata = 'Ürün kodu ve adet bilgisi gereklidir.'
+                    break
+                
+                try:
+                    adet = int(adet)
+                    if adet <= 0:
+                        hata = 'Adet değeri pozitif bir sayı olmalıdır.'
+                        break
+                except ValueError:
+                    hata = 'Geçersiz adet değeri.'
+                    break
+                
+                # Ürünü bul
+                product = Product.objects.filter(urun_kodu=urun_kodu).first()
+                
+                if not product:
+                    hata = f'Ürün kodu "{urun_kodu}" olan ürün bulunamadı.'
+                    break
+                
+                # Stok artışı
+                product.adet += adet
+                product.save()
+                
+                sonuclar.append({
+                    'urun_kodu': urun_kodu,
+                    'urun_adi': product.isim,
+                    'artirilan_adet': adet,
+                    'yeni_stok': product.adet
+                })
+                
+            except Exception as e:
+                hata = str(e)
+                break
+        
+        if hata:
+            return JsonResponse({
+                'success': False,
+                'error': hata
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Toplam {len(sonuclar)} ürüne stok eklendi.',
+            'sonuclar': sonuclar
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Geçersiz JSON verisi.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -157,13 +240,23 @@ def stok_dus(request):
 @require_http_methods(["GET"])
 def urun_adet_to_id(request, urun_id):
     try:
+        # Tüm ürünlerin kodlarını listele
+        tum_urunler = Product.objects.all()
+        print("\n=== Mevcut Ürün Kodları ===")
+        for urun in tum_urunler:
+            print(f"Ürün Kodu: {urun.urun_kodu}")
+        print("==========================\n")
+        
+        # Gelen urun_id'yi göster
+        print(f"İstenen Ürün Kodu: {urun_id}")
+        
         # Ürünü ID'ye göre bul
-        product = Product.objects.filter(id=urun_id).first()
+        product = Product.objects.filter(urun_kodu=urun_id).first()
         
         if not product:
             return JsonResponse({
                 'success': False,
-                'error': f'ID: {urun_id} olan ürün bulunamadı.'
+                'error': f'Ürün kodu "{urun_id}" olan ürün bulunamadı.'
             }, status=404)
         
         return JsonResponse({
@@ -174,6 +267,40 @@ def urun_adet_to_id(request, urun_id):
                 'urun_kodu': product.urun_kodu,
                 'adet': product.adet
             }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@require_http_methods(["GET"])
+def urun_listesi(request):
+    """
+    Tüm ürünlerin listesini ve uyarı yüzdesini JSON formatında döndüren API endpoint'i.
+    """
+    try:
+        # Tüm ürünleri al
+        products = Product.objects.all()
+        uyari_ayarlari = UyariAyarlari.get_instance()
+        
+        # Ürünleri JSON formatına dönüştür
+        urunler = []
+        for product in products:
+            urunler.append({
+                'id': product.id,
+                'isim': product.isim,
+                'urun_kodu': product.urun_kodu,
+                'adet': product.adet,
+                'birim': product.birim if hasattr(product, 'birim') else None,
+                'kategori': product.kategori if hasattr(product, 'kategori') else None
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'urunler': urunler,
+            'uyari_yuzdesi': uyari_ayarlari.uyari_yuzdesi / 100
         })
         
     except Exception as e:
