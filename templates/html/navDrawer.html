@@ -21,8 +21,7 @@
             <ul>
                 <li><a href="{% url 'home' %}"><i class="fas fa-home mr-3"></i>Ana Sayfa</a></li>
                 <li class="accordion">
-                    <a href="#" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
-                        aria-controls="collapseOne" class="collapsible">
+                    <a href="#" class="collapsible" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                         <i class="fas fa-warehouse mr-3"></i>Depo
                     </a>
                     <div id="collapseOne" class="collapse" aria-labelledby="headingOne">
@@ -35,15 +34,14 @@
                     </div>
                 </li>
                 <li class="accordion">
-                    <a href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false"
-                        aria-controls="collapseTwo" class="collapsible">
+                    <a href="#" class="collapsible" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                         <i class="fas fa-sitemap mr-3"></i>Ürün Ağaçları
                     </a>
                     <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo">
                         <div>
                             <ul>
                                 <li><a href="{% url 'agac:agac_listesi' %}"><i class="fas fa-project-diagram mr-3"></i>Ürün Ağaçlarını Görüntüle</a></li>
-                                <li><a href="#"><i class="fas fa-plus-circle mr-3"></i>Yeni Ürün Ağacı Oluştur</a></li>
+                                <li><a href="{% url 'agac:agac_olustur' %}"><i class="fas fa-plus-circle mr-3"></i>Yeni Ürün Ağacı Oluştur</a></li>
                             </ul>
                         </div>
                     </div>
@@ -87,27 +85,30 @@
         </div>
         {% endif %}
     </div>
-
 </aside>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Burger menu toggle
   document.querySelector('.burger').addEventListener('click', function(e) {
     e.preventDefault();
     document.body.classList.toggle('show-sidebar');
     this.classList.toggle('active');
   });
 
-  document.querySelectorAll('.collapsible').forEach(function(element) {
+    // Initialize all collapsible elements
+    var collapsibleElements = document.querySelectorAll('.collapsible');
+    collapsibleElements.forEach(function(element) {
     element.addEventListener('click', function(e) {
       e.preventDefault();
-      const targetId = this.getAttribute('data-target');
-      const target = document.querySelector(targetId);
+            var targetId = this.getAttribute('data-bs-target');
+            var target = document.querySelector(targetId);
       
-      // Close all other menus
-      document.querySelectorAll('.collapse.show').forEach(function(collapse) {
-        if (collapse !== target) {
-          const bsCollapse = new bootstrap.Collapse(collapse);
-          bsCollapse.hide();
+            // Toggle the current menu
+            if (target) {
+                var bsCollapse = new bootstrap.Collapse(target, {
+                    toggle: true
+                });
         }
       });
     });

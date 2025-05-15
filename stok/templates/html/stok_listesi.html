@@ -47,7 +47,7 @@
     </div>
 
     <div id="main">
-        <table id="data-table">
+        <table id="data-table" class="table table-striped table-bordered">
             <thead>
                 <tr class="table100-head">
                     <th class="column1">No</th>
@@ -114,81 +114,89 @@
     </div>
 </div>
 
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+
+<!-- DataTables JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const filterInput = document.getElementById('table-filter-input');
-    const filterColumn = document.getElementById('filter-column');
-    const clearButton = document.getElementById('clear-filter');
-    const table = document.getElementById('data-table');
-    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-
-    // Filtreleme fonksiyonu
-    function filterTable() {
-        const filterValue = filterInput.value.toLowerCase();
-        const columnIndex = filterColumn.value === 'all' ? -1 : parseInt(filterColumn.value) - 1;
-
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            const cells = row.getElementsByTagName('td');
-            let found = false;
-
-            if (columnIndex === -1) {
-                // Tüm sütunlarda ara
-                for (let j = 0; j < cells.length; j++) {
-                    const cellText = cells[j].textContent.toLowerCase();
-                    if (cellText.includes(filterValue)) {
-                        found = true;
-                        break;
-                    }
-                }
-            } else {
-                // Sadece seçili sütunda ara
-                const cellText = cells[columnIndex].textContent.toLowerCase();
-                found = cellText.includes(filterValue);
+$(document).ready(function() {
+    // DataTables initialization
+    var table = $('#data-table').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Tümü"]],
+        "language": {
+            "lengthMenu": "Sayfa başına _MENU_ kayıt göster",
+            "zeroRecords": "Kayıt bulunamadı",
+            "info": "Toplam _TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
+            "infoEmpty": "Kayıt yok",
+            "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
+            "search": "",
+            "paginate": {
+                "first": "İlk",
+                "last": "Son",
+                "next": "Sonraki",
+                "previous": "Önceki"
             }
-
-            row.style.display = found ? '' : 'none';
+        },
+        "order": [[0, 'asc']],
+        "columnDefs": [
+            { "orderable": false, "targets": [13] } // İşlemler sütunu sıralanamaz
+        ],
+        "dom": '<"top"l>rt<"bottom"ip><"clear">', // Arama kutusunu kaldır
+        "initComplete": function() {
+            // DataTables'ın varsayılan arama kutusunu gizle
+            $('.dataTables_filter').hide();
         }
-    }
+    });
 
-    // Filtreleme olaylarını dinle
-    filterInput.addEventListener('keyup', filterTable);
-    filterColumn.addEventListener('change', filterTable);
+    // Mevcut filtreleme fonksiyonlarını DataTables ile entegre et
+    $('#filter-column').on('change', function() {
+        var columnIndex = $(this).val();
+        if (columnIndex === 'all') {
+            table.column().search('').draw();
+        } else {
+            table.column(parseInt(columnIndex) - 1).search($('#table-filter-input').val()).draw();
+        }
+    });
 
-    // Temizleme butonu işlevi
-    clearButton.addEventListener('click', function() {
-        filterInput.value = '';
-        filterColumn.value = 'all';
-        filterTable();
+    $('#table-filter-input').on('keyup', function() {
+        var columnIndex = $('#filter-column').val();
+        if (columnIndex === 'all') {
+            table.search(this.value).draw();
+        } else {
+            table.column(parseInt(columnIndex) - 1).search(this.value).draw();
+        }
+    });
+
+    $('#clear-filter').on('click', function() {
+        $('#table-filter-input').val('');
+        $('#filter-column').val('all');
+        table.search('').columns().search('').draw();
     });
 });
 
 function showAllProducts() {
-    const rows = document.querySelectorAll('#data-table tbody tr');
-    rows.forEach(row => row.style.display = '');
+    var table = $('#data-table').DataTable();
+    table.search('').draw();
 }
 
 function showYellowWarnings() {
-    const rows = document.querySelectorAll('#data-table tbody tr');
-    rows.forEach(row => {
-        if (row.classList.contains('stok-uyari')) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
+    var table = $('#data-table').DataTable();
+    table.search('').draw();
+    $('.stok-uyari').show();
+    $('tr:not(.stok-uyari)').hide();
 }
 
 function showRedWarnings() {
-    const rows = document.querySelectorAll('#data-table tbody tr');
-    rows.forEach(row => {
-        if (row.classList.contains('stok-kritik')) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
+    var table = $('#data-table').DataTable();
+    table.search('').draw();
+    $('.stok-kritik').show();
+    $('tr:not(.stok-kritik)').hide();
 }
 
 function generateQRCode(rafNo) {
@@ -196,13 +204,11 @@ function generateQRCode(rafNo) {
         alert('Raf bilgisi mevcut değil.');
         return;
     }
-    // Create a QR code
     var qr = new QRious({
         value: rafNo,
         size: 200
     });
     
-    // Create a temporary link element
     var link = document.createElement('a');
     link.href = qr.toDataURL();
     link.download = rafNo + '.png';

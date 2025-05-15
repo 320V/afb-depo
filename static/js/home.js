@@ -1,44 +1,50 @@
-//Stok Filtreleme:
+$(document).ready(function() {
+    // Stok Filtreleme
+    const $tableFilterInput = $("#table-filter-input");
+    const $filterColumn = $("#filter-column");
+    const $clearFilter = $("#clear-filter");
 
-//Stok Filter input listener:
-document.getElementById("table-filter-input").addEventListener("input", function () {
-  const input = this.value.toLowerCase();
-  const table = document.getElementById("data-table");
-  const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-  const colIndex = document.getElementById("filter-column").value;
+    if ($tableFilterInput.length) {
+        $tableFilterInput.on("input", function() {
+            const input = this.value.toLowerCase();
+            const $table = $("#data-table");
+            const $rows = $table.find("tbody tr");
+            const colIndex = $filterColumn.val();
 
-  for (let i = 0; i < rows.length; i++) {
-    let show = false;
-    const cells = rows[i].getElementsByTagName("td");
+            $rows.each(function() {
+                let show = false;
+                const $cells = $(this).find("td");
 
-    if (colIndex === "all") {
-      for (let cell of cells) {
-        if (cell.textContent.toLowerCase().includes(input)) {
-          show = true;
-          break;
-        }
-      }
-    } else {
-      if (cells[colIndex] && cells[colIndex].textContent.toLowerCase().includes(input)) {
-        show = true;
-      }
+                if (colIndex === "all") {
+                    $cells.each(function() {
+                        if ($(this).text().toLowerCase().includes(input)) {
+                            show = true;
+                            return false; // break the loop
+                        }
+                    });
+                } else {
+                    if ($cells.eq(colIndex).length && $cells.eq(colIndex).text().toLowerCase().includes(input)) {
+                        show = true;
+                    }
+                }
+
+                $(this).toggle(show);
+            });
+        });
     }
 
-    rows[i].style.display = show ? "" : "none";
-  }
-});
+    // Comcobox seçim sonrası filtreleme sıfırla
+    if ($filterColumn.length) {
+        $filterColumn.on("change", function() {
+            $tableFilterInput.trigger("input");
+        });
+    }
 
-//Comcobox seçim sonrası filtreleme sıfırla ve listener tetikle:
-document.getElementById('filter-column').addEventListener('change', function () {
-
-  const input = document.getElementById("table-filter-input");
-  input.dispatchEvent(new Event("input"));
-});
-
-//Çarpı sonrası filtreleme sıfırla ve listener tetikle:
-document.getElementById("clear-filter").addEventListener("click", function () {
-  const input = document.getElementById("table-filter-input");
-  input.value = "";
-  input.dispatchEvent(new Event("input"));
+    // Çarpı sonrası filtreleme sıfırla
+    if ($clearFilter.length) {
+        $clearFilter.on("click", function() {
+            $tableFilterInput.val("").trigger("input");
+        });
+    }
 });
 

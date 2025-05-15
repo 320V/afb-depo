@@ -1,0 +1,412 @@
+{% extends 'html/base.html' %}
+{% load static %}
+
+{% block title %}Yeni Ürün Ağacı{% endblock %}
+
+{% block content %}
+<div class="container-fluid tree-page">
+    <div class="row">
+        <!-- Sidebar -->
+        {% include 'html/sidebar.html' %}
+
+        <!-- Main Content -->
+        <main>
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Ürün Ağaçları / Yeni Ürün Ağacı</h1>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-12 col-xl-11">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <form id="agacForm">
+                                {% csrf_token %}
+                                <!-- Ürün Ağacı Adı -->
+                                <div class="mb-4">
+                                    <label for="agacAdi" class="form-label">Ürün Ağacı Adı</label>
+                                    <input type="text" class="form-control bg-light" id="agacAdi" required>
+                                </div>
+
+                                <!-- Ürün Ağacı Açıklaması -->
+                                <div class="mb-4">
+                                    <label for="agacAciklama" class="form-label">Ürün Ağacı Açıklaması</label>
+                                    <textarea class="form-control bg-light" id="agacAciklama" rows="3"></textarea>
+                                </div>
+
+                                <!-- Ağaç İçeriği Frame -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="card-title mb-0">Ağaç İçeriği</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="urunListesi">
+                                            <!-- İlk ürün seçimi -->
+                                            <div class="row mb-3 align-items-center urun-satiri">
+                                                <div class="col-md-9">
+                                                    <select class="form-select urun-select bg-light" data-live-search="true">
+                                                        <option value="">Ürün Seçin</option>
+                                                        {% for urun in urunler %}
+                                                        <option value="{{ urun.id }}">{{ urun.urun_kodu }} - {{ urun.isim }} - Stok: {{ urun.adet }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <input type="number" class="form-control miktar-input bg-light" min="1" value="1">
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <!-- İlk satır için silme butonu yok -->
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Yeni Ürün Ekle Butonu -->
+                                        <button type="button" class="btn btn-outline-primary" id="yeniUrunEkle">
+                                            <i class="fas fa-plus"></i> Yeni Ürün Ekle
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Mevcut Stok Bilgisi ve Hesapla Butonu -->
+                                <div class="text-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center gap-3">
+                                        <p class="text-muted mb-0">Mevcut Stok Üretilebilir Adet: -</p>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="hesaplaBtn">
+                                            <i class="fas fa-calculator"></i> Hesapla
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Ağacı Oluştur Butonu -->
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save"></i> Ağacı Oluştur
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 5px;
+    }
+    
+    .btn-primary {
+        padding: 10px 30px;
+        border-radius: 5px;
+    }
+    
+    .urun-satiri {
+        transition: all 0.3s ease;
+    }
+    
+    .urun-satiri:hover .urun-sil {
+        display: block !important;
+    }
+    
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        background-color: #f8f9fa !important;
+        border: 1px solid #ced4da;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #495057;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #0d6efd;
+    }
+
+    /* Yeni stil eklemeleri */
+    .card-body {
+        padding: 2rem;
+    }
+
+    .urun-select {
+        font-size: 0.95rem;
+    }
+
+    .miktar-input {
+        font-size: 0.95rem;
+        text-align: center;
+    }
+
+    .btn-outline-primary {
+        padding: 0.5rem 1.5rem;
+    }
+
+    /* Form elemanları için ek stiller */
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .card-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .card-header .card-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // CSRF token'ı al
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Initialize Select2 for all select elements with search functionality
+    $('.urun-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "Sonuç bulunamadı";
+            },
+            searching: function() {
+                return "Aranıyor...";
+            }
+        },
+        templateResult: function(data) {
+            if (!data.id) return data.text;
+            return $('<span>' + data.text + '</span>');
+        },
+        matcher: function(params, data) {
+            // If there are no search terms, return all of the data
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+
+            // Do not display the item if there is no 'text' property
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+
+            // Search in product code, name and stock quantity
+            var searchStr = data.text.toLowerCase();
+            var searchTerm = params.term.toLowerCase();
+
+            if (searchStr.indexOf(searchTerm) > -1) {
+                return data;
+            }
+
+            // Return `null` if the term should not be displayed
+            return null;
+        }
+    });
+
+    // Add new product row
+    $('#yeniUrunEkle').click(function() {
+        const yeniSatir = `
+            <div class="row mb-3 align-items-center urun-satiri">
+                <div class="col-md-9">
+                    <select class="form-select urun-select bg-light" data-live-search="true">
+                        <option value="">Ürün Seçin</option>
+                        {% for urun in urunler %}
+                        <option value="{{ urun.id }}">{{ urun.urun_kodu }} - {{ urun.isim }} - Stok: {{ urun.adet }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control miktar-input bg-light" min="1" value="1">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-sm urun-sil">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $('#urunListesi').append(yeniSatir);
+        
+        // Initialize Select2 for the new select element
+        $('#urunListesi .urun-select').last().select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "Sonuç bulunamadı";
+                },
+                searching: function() {
+                    return "Aranıyor...";
+                }
+            },
+            templateResult: function(data) {
+                if (!data.id) return data.text;
+                return $('<span>' + data.text + '</span>');
+            },
+            matcher: function(params, data) {
+                if ($.trim(params.term) === '') {
+                    return data;
+                }
+                if (typeof data.text === 'undefined') {
+                    return null;
+                }
+                var searchStr = data.text.toLowerCase();
+                var searchTerm = params.term.toLowerCase();
+                if (searchStr.indexOf(searchTerm) > -1) {
+                    return data;
+                }
+                return null;
+            }
+        });
+    });
+
+    // Remove product row
+    $(document).on('click', '.urun-sil', function() {
+        $(this).closest('.urun-satiri').remove();
+    });
+
+    // Hesapla butonu için event handler
+    $('#hesaplaBtn').click(function() {
+        // Tüm ürün satırlarını kontrol et
+        var urunSatirlari = $('.urun-satiri');
+        var hesaplanabilir = true;
+        var minUretilebilirAdet = Infinity;
+
+        urunSatirlari.each(function() {
+            var urunSelect = $(this).find('.urun-select');
+            var miktarInput = $(this).find('.miktar-input');
+
+            // Ürün seçilmemiş veya adet girilmemişse hesaplanamaz
+            if (!urunSelect.val() || !miktarInput.val()) {
+                hesaplanabilir = false;
+                return false; // döngüden çık
+            }
+
+            // Seçilen ürünün stok adedini al
+            var urunText = urunSelect.find('option:selected').text();
+            var stokAdet = parseInt(urunText.split('Stok: ')[1]);
+            var gerekliAdet = parseInt(miktarInput.val());
+
+            // Bu üründen kaç tane üretilebilir?
+            var uretilebilirAdet = Math.floor(stokAdet / gerekliAdet);
+            if (uretilebilirAdet < minUretilebilirAdet) {
+                minUretilebilirAdet = uretilebilirAdet;
+            }
+        });
+
+        // Sonucu göster
+        if (hesaplanabilir && minUretilebilirAdet !== Infinity) {
+            $('.text-muted.mb-0').text('Mevcut Stok Üretilebilir Adet: ' + minUretilebilirAdet);
+        } else {
+            $('.text-muted.mb-0').text('Mevcut Stok Üretilebilir Adet: -');
+        }
+    });
+
+    // Form submission
+    $('#agacForm').submit(function(e) {
+        e.preventDefault();
+        
+        // Form verilerini topla
+        var formData = {
+            ad: $('#agacAdi').val(),
+            aciklama: $('#agacAciklama').val(),
+            urunler: []
+        };
+
+        // Ürün satırlarını kontrol et
+        var urunSatirlari = $('.urun-satiri');
+        var hataVar = false;
+
+        urunSatirlari.each(function() {
+            var urunSelect = $(this).find('.urun-select');
+            var miktarInput = $(this).find('.miktar-input');
+
+            if (!urunSelect.val() || !miktarInput.val()) {
+                hataVar = true;
+                return false;
+            }
+
+            formData.urunler.push({
+                urun_id: urunSelect.val(),
+                urun_adi: urunSelect.find('option:selected').text(),
+                miktar: parseInt(miktarInput.val())
+            });
+        });
+
+        if (hataVar) {
+            alert('Lütfen tüm ürün alanlarını doldurun!');
+            return;
+        }
+
+        // Form verilerini gönder
+        $.ajax({
+            url: '/agac/yeni/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    alert(response.message);
+                    window.location.href = response.redirect;
+                } else {
+                    alert('Hata: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Bir hata oluştu';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage += ': ' + xhr.responseJSON.message;
+                }
+                alert(errorMessage);
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

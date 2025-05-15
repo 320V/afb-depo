@@ -198,11 +198,28 @@ body {
             transform: rotate(180deg); }
   
   main {
-    width: calc(100%);
-    transition: margin-left 0.3s ease;
+    margin-left: 50px;
+    width: calc(100% - 50px);
+    position: relative;
+    z-index: 1;
+    -webkit-transition: .3s all ease;
+    -o-transition: .3s all ease;
+    transition: .3s all ease;
   }
+
+  /* Tree pages specific styles */
+  .tree-page main {
+    margin-left: 100px;
+    width: 80%;
+  }
+
   .show-sidebar main {
     margin-left: 300px;
+  }
+
+  .show-sidebar .tree-page main {
+    margin-left: 300px;
+    width: calc(80% - 300px);
   }
     main .post-entry {
       margin-bottom: 30px; }
