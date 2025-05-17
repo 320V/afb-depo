@@ -134,7 +134,7 @@
                             <a href="{% url 'admin:stok_product_change' product.id %}" class="btn btn-warning btn-sm" title="Düzenle">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <button class="btn btn-info btn-sm" onclick="generateQRCode('{{ product.raf_no }}')" title="QR Kod Oluştur">
+                            <button class="btn btn-info btn-sm" onclick="generateQRCode('{{ product.urun_kodu }}')" title="QR Kod Oluştur">
                                 <i class="fas fa-qrcode"></i>
                             </button>
                         {% endif %}
@@ -262,19 +262,19 @@ function showRedWarnings() {
     $('tr:not(.stok-kritik)').hide();
 }
 
-function generateQRCode(rafNo) {
-    if (!rafNo) {
-        alert('Raf bilgisi mevcut değil.');
+function generateQRCode(urunKodu) {
+    if (!urunKodu) {
+        alert('Ürün kodu mevcut değil.');
         return;
     }
     var qr = new QRious({
-        value: rafNo,
+        value: urunKodu,
         size: 200
     });
     
     var link = document.createElement('a');
     link.href = qr.toDataURL();
-    link.download = rafNo + '.png';
+    link.download = urunKodu + '.png';
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
