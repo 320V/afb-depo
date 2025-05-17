@@ -1,0 +1,19 @@
+.navbar-custom {
+    height: 70px;
+}
+
+.navbar-logo {
+    height: 75%;
+    object-fit: contain;
+}
+.bg-light {
+    background-color: #f9f9f9;
+}
+
+#searchInput {
+    width: 300px;
+}
+
+#clearSearch {
+    height: 38px;
+}

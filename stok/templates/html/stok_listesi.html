@@ -3,6 +3,44 @@
 {% load stok_tags %}
 
 {% block content %}
+<style>
+    .table-responsive {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    #data-table {
+        width: 100% !important;
+        margin: 0;
+        padding: 0;
+        table-layout: fixed;
+    }
+    .table-filter-bar {
+        margin-bottom: 15px;
+    }
+    .dataTables_wrapper {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .dataTables_scroll {
+        width: 100% !important;
+    }
+    .dataTables_scrollBody {
+        width: 100% !important;
+    }
+    .dataTables_scrollHead {
+        width: 100% !important;
+    }
+    .dataTables_scrollHeadInner {
+        width: 100% !important;
+    }
+    .dataTables_scrollHeadInner table {
+        width: 100% !important;
+    }
+</style>
+
 <div class="container-fluid">
     <!-- Breadcrumb Navigation -->
     <div class="breadcrumb">
@@ -24,8 +62,10 @@
             <option value="8">Birim</option>
             <option value="9">Raf No</option>
             <option value="10">Marka</option>
-            <option value="11">Oluşturulma</option>
-            <option value="12">Güncellenme</option>
+            <option value="11">Birim Fiyat</option>
+            <option value="12">Kasa Tipi</option>
+            <option value="13">Oluşturulma</option>
+            <option value="14">Güncellenme</option>
         </select>
         
         <input type="text" id="table-filter-input" placeholder="Arama yapın veya filtreleyin... (Büyük/küçük harf duyarsız)">
@@ -58,14 +98,11 @@
                     <th class="column6">Açıklama</th>
                     <th class="column7">Adet</th>
                     <th class="column8">Asgari</th>
-                    <th class="column9">Birim</th>
-                    <th class="column10">Raf</th>
-                    <th class="column11">Marka</th>
-                    {% if user.is_staff %}
-                    <th class="column12">Oluşturulma</th>
-                    {% endif %}
-                    <th class="column13">Güncellenme</th>
-                    <th class="column14" style="width: 200px;">İşlemler</th>
+                    <th class="column9">Raf</th>
+                    <th class="column10">Marka</th>
+                    <th class="column11">Birim Fiyat ₺</th>
+                    <th class="column12">Kasa Tipi</th>
+                    <th class="column13" style="width: 200px;">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
@@ -79,24 +116,19 @@
                     <td class="column6">{{ product.aciklama }}</td>
                     <td class="column7">{{ product.adet }}</td>
                     <td class="column8">{{ product.asgari_adet }}</td>
-                    <td class="column9">{{ product.birim }}</td>
-                    <td class="column10">{{ product.raf_no }}</td>
-                    <td class="column11">{{ product.marka }}</td>
-                    {% if user.is_staff %}
-                    <td class="column12">
-                        {{ product.olusturma_tarihi|date:"d.m.Y" }}<br>
-                        {{ product.olusturma_saat|time:"H:i" }}
-                    </td>
-                    {% endif %}
+                    <td class="column9">{{ product.raf_no }}</td>
+                    <td class="column10">{{ product.marka }}</td>
+                    <td class="column11">{{ product.birim_fiyati|default:"-" }}</td>
+                    <td class="column12">{{ product.kasa_tipi|default:"-" }}</td>
                     <td class="column13">
-                        {{ product.guncelleme_tarihi|date:"d.m.Y" }}<br>
-                        {{ product.guncelleme_saat|time:"H:i" }}
-                    </td>
-                    <td class="column14">
                         {% if user.is_authenticated %}
                             {% if product.adet <= product.asgari_adet %}
                             <div class="warning-icon-container" title="Kritik Stok Seviyesi!">
                                 <i class="fas fa-exclamation-circle warning-icon"></i>
+                            </div>
+                            {% elif product.adet <= product.asgari_adet|multiply:uyari_yuzdesi %}
+                            <div class="warning-icon-container" title="Stok Seviyesi Düşük!">
+                                <i class="fas fa-exclamation-circle warning-icon" style="color: #ffc107;"></i>
                             </div>
                             {% endif %}
                             <a href="{% url 'admin:stok_product_change' product.id %}" class="btn btn-warning btn-sm" title="Düzenle">
@@ -145,13 +177,43 @@ $(document).ready(function() {
         },
         "order": [[0, 'asc']],
         "columnDefs": [
-            { "orderable": false, "targets": [13] } // İşlemler sütunu sıralanamaz
+            { "orderable": false, "targets": [12] }, // İşlemler sütunu sıralanamaz
+            { "width": "5%", "targets": 0 }, // No
+            { "width": "12%", "targets": 1 }, // Ürün Adı
+            { "width": "8%", "targets": 2 }, // Ürün Kodu
+            { "width": "12%", "targets": 3 }, // Muhasebe Kodu
+            { "width": "8%", "targets": 4 }, // Tedarikçi
+            { "width": "10%", "targets": 5 }, // Açıklama
+            { "width": "5%", "targets": 6 }, // Adet
+            { "width": "5%", "targets": 7 }, // Asgari
+            { "width": "5%", "targets": 8 }, // Raf
+            { "width": "8%", "targets": 9 }, // Marka
+            { "width": "8%", "targets": 10 }, // Birim Fiyat
+            { "width": "8%", "targets": 11 }, // Kasa Tipi
+            { "width": "10%", "targets": 12 } // İşlemler
         ],
         "dom": '<"top"l>rt<"bottom"ip><"clear">', // Arama kutusunu kaldır
         "initComplete": function() {
             // DataTables'ın varsayılan arama kutusunu gizle
             $('.dataTables_filter').hide();
-        }
+            // Tablo genişliğini sabitle
+            $('#data-table').css('width', '100%');
+            $('.dataTables_scrollBody').css('width', '100%');
+            $('.dataTables_scrollHead').css('width', '100%');
+            $('.dataTables_scrollHeadInner').css('width', '100%');
+            $('.dataTables_scrollHeadInner table').css('width', '100%');
+        },
+        "scrollX": false,
+        "autoWidth": false
+    });
+
+    // Pencere yeniden boyutlandırıldığında tablo genişliğini koru
+    $(window).on('resize', function() {
+        $('#data-table').css('width', '100%');
+        $('.dataTables_scrollBody').css('width', '100%');
+        $('.dataTables_scrollHead').css('width', '100%');
+        $('.dataTables_scrollHeadInner').css('width', '100%');
+        $('.dataTables_scrollHeadInner table').css('width', '100%');
     });
 
     // Mevcut filtreleme fonksiyonlarını DataTables ile entegre et
@@ -183,6 +245,7 @@ $(document).ready(function() {
 function showAllProducts() {
     var table = $('#data-table').DataTable();
     table.search('').draw();
+    $('tr').show(); // Show all rows
 }
 
 function showYellowWarnings() {

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, UyariAyarlari
+from .models import Product, UyariAyarlari, StockMovement, SystemSettings
 from django.urls import path
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -9,6 +9,8 @@ from datetime import datetime
 from django import forms
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.html import format_html
+from django.utils import timezone
 
 class MuhasebeOnayForm(forms.Form):
     onay = forms.BooleanField(required=True, label="Var olan ürünlerin Muhasebe Kodu ve Ürün Adı bilgilerini güncellemek istiyor musunuz?")
@@ -33,40 +35,12 @@ def get_stok_dict(engine=None):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    # Listede gösterilecek alanlar
-    list_display = ('isim', 'urun_kodu', 'muhasebe_kodu', 'tedarikci_kodu', 'marka', 'adet', 'asgari_adet', 'birim', 'raf_no', 'olusturma_tarihi', 'olusturma_saat', 'guncelleme_tarihi', 'guncelleme_saat')
-    
-    # Arama yapılabilecek alanlar
-    search_fields = ('isim', 'urun_kodu', 'muhasebe_kodu', 'tedarikci_kodu', 'marka', 'raf_no')
-    
-    # Filtreleme seçenekleri
-    list_filter = ('marka', 'birim', 'olusturma_tarihi', 'guncelleme_tarihi')
-    
-    # Sıralama seçenekleri
-    ordering = ('-olusturma_tarihi', '-olusturma_saat')
-    
-    # Sayfa başına gösterilecek kayıt sayısı
-    list_per_page = 20
-    
-    # Tarih bazlı hiyerarşik filtreleme
-    date_hierarchy = 'olusturma_tarihi'
-    
-    # Düzenleme formunda gruplandırma
-    fieldsets = (
-        ('Temel Bilgiler', {
-            'fields': ('isim', 'muhasebe_kodu', 'tedarikci_kodu', 'aciklama', 'marka')
-        }),
-        ('Stok Bilgileri', {
-            'fields': ('adet', 'asgari_adet', 'birim', 'raf_no')
-        }),
-        ('Tarih Bilgileri', {
-            'fields': ('olusturma_tarihi', 'olusturma_saat', 'guncelleme_tarihi', 'guncelleme_saat'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    # Sadece okunabilir alanlar
-    readonly_fields = ('urun_kodu', 'olusturma_tarihi', 'olusturma_saat', 'guncelleme_tarihi', 'guncelleme_saat')
+    list_display = ('isim', 'urun_kodu', 'adet', 'asgari_adet', 'birim', 'urun_tipi', 'kasa_tipi', 'birim_fiyati')
+    search_fields = ('isim', 'urun_kodu', 'muhasebe_kodu', 'tedarikci_kodu')
+    list_filter = ('urun_tipi', 'kasa_tipi', 'marka')
+    ordering = ('isim',)
+    show_muhasebe_button = True  # Muhasebe Programından Ekle butonunu göster
+    change_list_template = 'admin/stok/product/change_list.html'  # Özel template'i kullan
 
     def get_urls(self):
         urls = super().get_urls()
@@ -78,39 +52,60 @@ class ProductAdmin(admin.ModelAdmin):
 
     def muhasebe_ekle_view(self, request):
         try:
-            # Muhasebe programından verileri çek
+            # Muhasebe programından veri çek
             stok_dict = get_stok_dict()
             
-            # Var olan ürünleri kontrol et
+            # Mevcut ürünleri ve yeni ürünleri belirle
             mevcut_urunler = []
             yeni_urunler = []
             
-            for stok_kodu, urun_adi in stok_dict.items():
-                if Product.objects.filter(muhasebe_kodu=stok_kodu).exists():
+            for stok_kodu, stok_adi in stok_dict.items():
+                try:
+                    urun = Product.objects.get(muhasebe_kodu=stok_kodu)
                     mevcut_urunler.append({
-                        'muhasebe_kodu': stok_kodu,
-                        'urun_adi': urun_adi
+                        'urun_kodu': urun.urun_kodu,
+                        'urun_adi': urun.isim,
+                        'yeni_urun_adi': stok_adi,
+                        'muhasebe_kodu': stok_kodu
                     })
-                else:
+                except Product.DoesNotExist:
                     yeni_urunler.append({
-                        'muhasebe_kodu': stok_kodu,
-                        'urun_adi': urun_adi
+                        'urun_adi': stok_adi,
+                        'muhasebe_kodu': stok_kodu
                     })
             
-            # Eğer mevcut ürün varsa, onay sayfasına yönlendir
-            if mevcut_urunler:
-                request.session['mevcut_urunler'] = mevcut_urunler
-                request.session['yeni_urunler'] = yeni_urunler
-                return redirect('admin:muhasebe-onay')
+            # Session'a kaydet
+            request.session['mevcut_urunler'] = mevcut_urunler
+            request.session['yeni_urunler'] = yeni_urunler
             
-            # Mevcut ürün yoksa direkt yeni ürünleri ekle
-            self._yeni_urunleri_ekle(yeni_urunler)
-            self.message_user(request, f"Toplam {len(yeni_urunler)} yeni ürün başarıyla eklendi.", messages.SUCCESS)
-            
+            return render(request, 'admin/stok/product/muhasebe_onay.html', {
+                'form': MuhasebeOnayForm(),
+                'mevcut_urun_sayisi': len(mevcut_urunler),
+                'yeni_urun_sayisi': len(yeni_urunler),
+                'mevcut_urunler': mevcut_urunler[:10],  # İlk 10 ürünü göster
+                'title': 'Muhasebe Ürün Güncelleme Onayı',
+                'opts': self.model._meta,
+            })
         except Exception as e:
-            self.message_user(request, f"Hata oluştu: {str(e)}", messages.ERROR)
-        
-        return self.changelist_view(request)
+            self.message_user(request, f"Muhasebe programına bağlanırken hata oluştu: {str(e)}", messages.ERROR)
+            return redirect('admin:stok_product_changelist')
+
+    def _mevcut_urunleri_guncelle(self, mevcut_urunler):
+        for urun in mevcut_urunler:
+            try:
+                product = Product.objects.get(muhasebe_kodu=urun['muhasebe_kodu'])
+                product.isim = urun['yeni_urun_adi']
+                product.save()
+            except Product.DoesNotExist:
+                continue
+
+    def _yeni_urunleri_ekle(self, yeni_urunler):
+        for urun in yeni_urunler:
+            Product.objects.create(
+                isim=urun['urun_adi'],
+                muhasebe_kodu=urun['muhasebe_kodu'],
+                birim_fiyati=0  # Varsayılan değer
+            )
 
     def muhasebe_onay_view(self, request):
         if request.method == 'POST':
@@ -138,14 +133,14 @@ class ProductAdmin(admin.ModelAdmin):
                     self.message_user(request, f"Hata oluştu: {str(e)}", messages.ERROR)
                 
                 return redirect('admin:stok_product_changelist')
-        else:
-            form = MuhasebeOnayForm()
+            else:
+                self.message_user(request, "Lütfen onay kutusunu işaretleyin.", messages.ERROR)
         
         mevcut_urunler = request.session.get('mevcut_urunler', [])
         yeni_urunler = request.session.get('yeni_urunler', [])
         
         context = {
-            'form': form,
+            'form': MuhasebeOnayForm(),
             'mevcut_urun_sayisi': len(mevcut_urunler),
             'yeni_urun_sayisi': len(yeni_urunler),
             'mevcut_urunler': mevcut_urunler[:10],  # İlk 10 ürünü göster
@@ -155,59 +150,68 @@ class ProductAdmin(admin.ModelAdmin):
         
         return render(request, 'admin/stok/product/muhasebe_onay.html', context)
 
-    def _mevcut_urunleri_guncelle(self, mevcut_urunler):
-        now = datetime.now()
-        current_date = now.date()
-        current_time = now.time()
-        
-        for urun in mevcut_urunler:
-            Product.objects.filter(muhasebe_kodu=urun['muhasebe_kodu']).update(
-                isim=urun['urun_adi'],
-                guncelleme_tarihi=current_date,
-                guncelleme_saat=current_time
-            )
-
-    def _yeni_urunleri_ekle(self, yeni_urunler):
-        now = datetime.now()
-        current_date = now.date()
-        current_time = now.time()
-        
-        for urun in yeni_urunler:
-            Product.objects.create(
-                muhasebe_kodu=urun['muhasebe_kodu'],
-                isim=urun['urun_adi'],
-                adet=0,
-                asgari_adet=1,
-                birim='ADET',
-                marka='UMAY TECH',
-                olusturma_tarihi=current_date,
-                olusturma_saat=current_time,
-                guncelleme_tarihi=current_date,
-                guncelleme_saat=current_time
-            )
-
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context['show_muhasebe_button'] = True
         return super().changelist_view(request, extra_context=extra_context)
-
+        
 @admin.register(UyariAyarlari)
 class UyariAyarlariAdmin(admin.ModelAdmin):
-    list_display = ('uyari_yuzdesi', 'guncelleme_tarihi')
-    readonly_fields = ('guncelleme_tarihi',)
-    fieldsets = (
-        ('Uyarı Ayarları', {
-            'fields': ('uyari_yuzdesi', 'guncelleme_tarihi')
-        }),
-    )
-
     def has_add_permission(self, request):
-        # Eğer zaten bir kayıt varsa, yeni eklemeye izin verme
-        if UyariAyarlari.objects.exists():
-            return False
-        return super().has_add_permission(request)
+        return False
 
     def has_delete_permission(self, request, obj=None):
-        # Silme işlemine izin verme
+        return False
+
+@admin.register(StockMovement)
+class StockMovementAdmin(admin.ModelAdmin):
+    list_display = ('product', 'urun_kodu', 'tedarikci_kodu', 'hareket_tipi', 'miktar', 'onceki_stok', 'sonraki_stok', 'islem_tarihi', 'kullanici', 'aciklama')
+    list_filter = ('hareket_tipi', 'islem_tarihi', 'kullanici')
+    search_fields = ('product__isim', 'product__urun_kodu', 'product__tedarikci_kodu', 'aciklama')
+    ordering = ('-islem_tarihi',)
+    readonly_fields = ('product', 'hareket_tipi', 'miktar', 'onceki_stok', 'sonraki_stok', 'islem_tarihi', 'kullanici', 'aciklama')
+
+    def urun_kodu(self, obj):
+        return obj.product.urun_kodu
+    urun_kodu.short_description = 'Ürün Kodu'
+
+    def tedarikci_kodu(self, obj):
+        return obj.product.tedarikci_kodu or '-'
+    tedarikci_kodu.short_description = 'Tedarikçi Kodu'
+
+@admin.register(SystemSettings)
+class SystemSettingsAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/system_settings_changelist.html'
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('sifirla/', self.admin_site.admin_view(self.sifirla_view), name='sifirla_view'),
+        ]
+        return custom_urls + urls
+
+    def sifirla_view(self, request):
+        if request.method == 'POST':
+            try:
+                # İstatistikleri sıfırla
+                StockMovement.objects.all().delete()
+                
+                # Son sıfırlama tarihini güncelle
+                settings = SystemSettings.get_instance()
+                settings.son_istatistik_sifirlama = timezone.now()
+                settings.save()
+                
+                messages.success(request, 'İstatistikler başarıyla sıfırlandı.')
+            except Exception as e:
+                messages.error(request, f'Bir hata oluştu: {str(e)}')
+            
+            return redirect('admin:stok_systemsettings_changelist')
+        
+        return render(request, 'admin/sifirla_confirm.html')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 

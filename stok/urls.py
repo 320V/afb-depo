@@ -7,5 +7,7 @@ urlpatterns = [
     path('urun-cikis/', views.urun_cikis, name='urun_cikis'),
     path('stok-dus/', views.stok_dus, name='stok_dus'),
     path('stok-artis/', views.stok_artis, name='stok_artis'),
-    path('<str:urun_id>/adet/', views.urun_adet_to_id, name='urun_adet_to_id'),
+    path('urun-adet/<int:urun_id>/', views.urun_adet_to_id, name='urun_adet_to_id'),
+    path('stok-hareketleri/', views.stok_hareketleri, name='stok_hareketleri'),
+    path('urun-bilgisi/<str:urun_kod>/', views.urun_bilgisi_api, name='urun_bilgisi_api'),
 ]

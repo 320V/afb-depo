@@ -1,0 +1,146 @@
+body {
+    font-family: "Lato", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+#main {
+  padding: 16px;
+}
+
+.table-filter-bar{
+  padding: 16px;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px 12px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+th.resizable {
+  position: relative;
+  cursor: col-resize;
+}
+
+th.resizable:after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background-color: #ccc;
+  cursor: col-resize;
+}
+.table-filter-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 20px auto;
+  width: 75%;
+}
+
+#table-filter-input {
+  width: 75%;
+  padding: 10px;
+  font-size: 18px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  margin-right: 10px;
+  transition: .1s;
+  border: 2px solid rgba(207, 207, 207, 0.5);
+  border-radius: 5px;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2), 0 0 3px rgba(0, 0, 0, 0.5);
+  
+}
+
+#table-filter-input:focus {
+  border-color: #4CAF50;
+  border: 2px solid rgba(207, 207, 207, 0.5);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+
+
+/* Genel Stil */
+#filter-column {
+  -webkit-appearance: none; /* Safari ve Chrome için */
+  -moz-appearance: none; /* Firefox için */
+  appearance: none; /* Diğer tarayıcılar için */
+  width: 200px;
+  padding: 10px 30px 10px 15px; /* Sol padding genişliği arttırıldı */
+  font-size: 16px;
+  color: #333;
+  background-color: #fff;
+  border: 2px solid rgba(207, 207, 207, 0.5);
+  border-radius: 5px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+#filter-column:focus {
+  border-color: #4CAF50;  /* Focus rengi */
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);  /* Focus durumunda gölge */
+}
+
+/* İkon eklemek için sağda ok işareti */
+#filter-column::after {
+  content: '▼';
+  font-size: 12px;
+  color: rgba(22, 154, 158, 0.5);
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.clear-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #888;
+}
+
+.breadcrumb {
+  padding: 16px 16px 16px 60px;  /* Sol padding'i artırdım */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 14px;
+}
+
+.breadcrumb-item {
+  color: #666;
+  text-decoration: none;
+}
+
+.breadcrumb-item.active {
+  color: #333;
+  font-weight: 500;
+}
+
+.breadcrumb i {
+  font-size: 12px;
+  color: #999;
+}
+
+.empty-state-alert {
+    margin-top: 100px;
+    padding-top: 1.5rem;
+}

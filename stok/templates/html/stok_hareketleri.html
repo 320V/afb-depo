@@ -1,0 +1,240 @@
+{% extends 'html/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .table-responsive {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    #data-table {
+        width: 100% !important;
+        margin: 0;
+        padding: 0;
+        table-layout: fixed;
+    }
+    .table-filter-bar {
+        margin-bottom: 15px;
+    }
+    .dataTables_wrapper {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .dataTables_scroll {
+        width: 100% !important;
+    }
+    .dataTables_scrollBody {
+        width: 100% !important;
+    }
+    .dataTables_scrollHead {
+        width: 100% !important;
+    }
+    .dataTables_scrollHeadInner {
+        width: 100% !important;
+    }
+    .dataTables_scrollHeadInner table {
+        width: 100% !important;
+    }
+    .date-filter-container {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .date-filter-container form {
+        display: inline-block;
+    }
+    .date-filter-container input[type="date"] {
+        margin-right: 10px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb">
+        <a href="{% url 'home' %}" class="breadcrumb-item">Depo</a>
+        <i class="fas fa-chevron-right"></i>
+        <span class="breadcrumb-item active">Stok Hareketleri</span>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="date-filter-container">
+        <form method="get">
+            <input type="date" name="tarih" class="form-control d-inline" style="width: auto;" value="{{ secilen_tarih|date:'Y-m-d' }}">
+            <button type="submit" class="btn btn-primary">Göster</button>
+        </form>
+    </div>
+
+    <div class="table-filter-bar">
+        <select id="filter-column">
+            <option value="all">Tümü</option>
+            <option value="1">Ürün Adı</option>
+            <option value="2">Ürün Kodu</option>
+            <option value="3">Tedarikçi Kodu</option>
+            <option value="4">Hareket</option>
+            <option value="5">Miktar</option>
+            <option value="6">Önceki Stok</option>
+            <option value="7">Sonraki Stok</option>
+            <option value="8">İşlemi Yapan</option>
+            <option value="9">Saat</option>
+        </select>
+        
+        <input type="text" id="table-filter-input" placeholder="Arama yapın veya filtreleyin... (Büyük/küçük harf duyarsız)">
+        
+        <button id="clear-filter" class="clear-button">
+            <i class="fa fa-times"></i>
+        </button>
+    </div>
+
+    <div id="main">
+        <table id="data-table" class="table table-striped table-bordered">
+            <thead>
+                <tr class="table100-head">
+                    <th class="column1">No</th>
+                    <th class="column2">Ürün Adı</th>
+                    <th class="column3">Ürün Kodu</th>
+                    <th class="column4">Tedarikçi Kodu</th>
+                    <th class="column5">Hareket</th>
+                    <th class="column6">Miktar</th>
+                    <th class="column7">Önceki Stok</th>
+                    <th class="column8">Sonraki Stok</th>
+                    <th class="column9">İşlemi Yapan</th>
+                    <th class="column10">Saat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hareket in hareketler %}
+                <tr>
+                    <td class="column1">{{ forloop.counter }}</td>
+                    <td class="column2">{{ hareket.product.isim }}</td>
+                    <td class="column3">{{ hareket.product.urun_kodu }}</td>
+                    <td class="column4">{{ hareket.product.tedarikci_kodu|default:"-" }}</td>
+                    <td class="column5">
+                        {% if hareket.hareket_tipi == 'giris' %}
+                        <span class="badge bg-success">Giriş</span>
+                        {% else %}
+                        <span class="badge bg-danger">Çıkış</span>
+                        {% endif %}
+                    </td>
+                    <td class="column6">{{ hareket.miktar }}</td>
+                    <td class="column7">{{ hareket.onceki_stok }}</td>
+                    <td class="column8">{{ hareket.sonraki_stok }}</td>
+                    <td class="column9">
+                        {% if hareket.kullanici %}
+                            {% if hareket.kullanici.get_full_name %}
+                                {{ hareket.kullanici.get_full_name }}
+                            {% else %}
+                                {{ hareket.kullanici.username }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="column10">{{ hareket.islem_tarihi|time:"H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center">Seçilen tarih için stok hareketi bulunmamaktadır.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+
+<!-- DataTables JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // DataTables initialization
+    var table = $('#data-table').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Tümü"]],
+        "language": {
+            "lengthMenu": "Sayfa başına _MENU_ kayıt göster",
+            "zeroRecords": "Kayıt bulunamadı",
+            "info": "Toplam _TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
+            "infoEmpty": "Kayıt yok",
+            "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
+            "search": "",
+            "paginate": {
+                "first": "İlk",
+                "last": "Son",
+                "next": "Sonraki",
+                "previous": "Önceki"
+            }
+        },
+        "order": [[0, 'asc']],
+        "columnDefs": [
+            { "width": "5%", "targets": 0 }, // No
+            { "width": "15%", "targets": 1 }, // Ürün Adı
+            { "width": "10%", "targets": 2 }, // Ürün Kodu
+            { "width": "10%", "targets": 3 }, // Tedarikçi Kodu
+            { "width": "8%", "targets": 4 }, // Hareket
+            { "width": "8%", "targets": 5 }, // Miktar
+            { "width": "8%", "targets": 6 }, // Önceki Stok
+            { "width": "8%", "targets": 7 }, // Sonraki Stok
+            { "width": "15%", "targets": 8 }, // İşlemi Yapan
+            { "width": "8%", "targets": 9 } // Saat
+        ],
+        "dom": '<"top"l>rt<"bottom"ip><"clear">', // Arama kutusunu kaldır
+        "initComplete": function() {
+            // DataTables'ın varsayılan arama kutusunu gizle
+            $('.dataTables_filter').hide();
+            // Tablo genişliğini sabitle
+            $('#data-table').css('width', '100%');
+            $('.dataTables_scrollBody').css('width', '100%');
+            $('.dataTables_scrollHead').css('width', '100%');
+            $('.dataTables_scrollHeadInner').css('width', '100%');
+            $('.dataTables_scrollHeadInner table').css('width', '100%');
+        },
+        "scrollX": false,
+        "autoWidth": false
+    });
+
+    // Pencere yeniden boyutlandırıldığında tablo genişliğini koru
+    $(window).on('resize', function() {
+        $('#data-table').css('width', '100%');
+        $('.dataTables_scrollBody').css('width', '100%');
+        $('.dataTables_scrollHead').css('width', '100%');
+        $('.dataTables_scrollHeadInner').css('width', '100%');
+        $('.dataTables_scrollHeadInner table').css('width', '100%');
+    });
+
+    // Mevcut filtreleme fonksiyonlarını DataTables ile entegre et
+    $('#filter-column').on('change', function() {
+        var columnIndex = $(this).val();
+        if (columnIndex === 'all') {
+            table.search('').columns().search('').draw();
+        } else {
+            var searchValue = $('#table-filter-input').val();
+            table.column(parseInt(columnIndex) - 1).search(searchValue).draw();
+        }
+    });
+
+    $('#table-filter-input').on('keyup', function() {
+        var columnIndex = $('#filter-column').val();
+        var searchValue = $(this).val();
+        
+        if (columnIndex === 'all') {
+            table.search(searchValue).draw();
+        } else {
+            table.column(parseInt(columnIndex) - 1).search(searchValue).draw();
+        }
+    });
+
+    $('#clear-filter').on('click', function() {
+        $('#table-filter-input').val('');
+        $('#filter-column').val('all');
+        table.search('').columns().search('').draw();
+    });
+});
+</script>
+{% endblock %} 

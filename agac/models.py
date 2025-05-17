@@ -9,7 +9,8 @@ class Agac(models.Model):
     urunler = models.JSONField()  # Ürün adları ve adetleri JSON olarak saklanacak
     olusturma_tarihi = models.DateTimeField(auto_now_add=True)
     guncelleme_tarihi = models.DateTimeField(auto_now=True)
-    olusturan = models.ForeignKey(User, on_delete=models.CASCADE)
+    olusturan = models.ForeignKey(User, on_delete=models.CASCADE, related_name='olusturan_agaclar')
+    son_guncelleyen = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='guncelleyen_agaclar')
     olusturma_saat = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

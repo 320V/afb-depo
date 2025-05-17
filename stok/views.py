@@ -2,9 +2,14 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from datetime import datetime, date
 import json
-from .models import Product, UyariAyarlari
+from .models import Product, UyariAyarlari, StockMovement
+from django.contrib.auth.decorators import login_required
+from django.core.serializers import serialize
 
+@login_required
 def table_view(request):
     products = Product.objects.all()
     uyari_ayarlari = UyariAyarlari.get_instance()
@@ -17,6 +22,7 @@ def table_view(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
 def urun_cikis(request):
     """
     Web arayüzündeki popup üzerinden ürün adı ve kodu seçilerek stoktan düşme yapan ve 
@@ -44,6 +50,7 @@ def urun_cikis(request):
                     })
                 
                 cikis_adet = int(urun['adet'])
+                onceki_stok = product.adet
                 
                 if product.adet < cikis_adet:
                     return JsonResponse({
@@ -53,6 +60,17 @@ def urun_cikis(request):
                 
                 product.adet -= cikis_adet
                 product.save()
+                
+                # Stok hareketi kaydı oluştur
+                StockMovement.objects.create(
+                    product=product,
+                    hareket_tipi='cikis',
+                    miktar=cikis_adet,
+                    onceki_stok=onceki_stok,
+                    sonraki_stok=product.adet,
+                    aciklama=f"Ürün çıkışı: {urun.get('aciklama', '')}",
+                    kullanici=request.user if request.user.is_authenticated else None
+                )
                 
             except ValueError:
                 return JsonResponse({
@@ -69,6 +87,7 @@ def urun_cikis(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
 def stok_artis(request):
     """
     Web arayüzündeki popup üzerinden ürün adı ve kodu seçilerek stoktan artış yapan ve 
@@ -112,9 +131,20 @@ def stok_artis(request):
                     hata = f'Ürün kodu "{urun_kodu}" olan ürün bulunamadı.'
                     break
                 
-                # Stok artışı
+                onceki_stok = product.adet
                 product.adet += adet
                 product.save()
+                
+                # Stok hareketi kaydı oluştur
+                StockMovement.objects.create(
+                    product=product,
+                    hareket_tipi='giris',
+                    miktar=adet,
+                    onceki_stok=onceki_stok,
+                    sonraki_stok=product.adet,
+                    aciklama=f"Stok artışı: {urun.get('aciklama', '')}",
+                    kullanici=request.user if request.user.is_authenticated else None
+                )
                 
                 sonuclar.append({
                     'urun_kodu': urun_kodu,
@@ -152,6 +182,7 @@ def stok_artis(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@login_required
 def stok_dus(request):
     """
     Ürün koduna göre stoktan düşme yapan ve her ürün için ayrı ayrı sonuç bilgisi döndüren bir API endpoint'tir.
@@ -199,9 +230,20 @@ def stok_dus(request):
                     hata = f'{product.isim} ürünü için yeterli stok yok. Mevcut stok: {product.adet}'
                     break
                 
-                # Stoktan düş
+                onceki_stok = product.adet
                 product.adet -= adet
                 product.save()
+                
+                # Stok hareketi kaydı oluştur
+                StockMovement.objects.create(
+                    product=product,
+                    hareket_tipi='cikis',
+                    miktar=adet,
+                    onceki_stok=onceki_stok,
+                    sonraki_stok=product.adet,
+                    aciklama=f"Stok düşüşü: {urun.get('aciklama', '')}",
+                    kullanici=request.user if request.user.is_authenticated else None
+                )
                 
                 sonuclar.append({
                     'urun_kodu': urun_kodu,
@@ -238,6 +280,7 @@ def stok_dus(request):
         })
 
 @require_http_methods(["GET"])
+@login_required
 def urun_adet_to_id(request, urun_id):
     try:
         # Tüm ürünlerin kodlarını listele
@@ -276,6 +319,7 @@ def urun_adet_to_id(request, urun_id):
         }, status=500)
 
 @require_http_methods(["GET"])
+@login_required
 def urun_listesi(request):
     """
     Tüm ürünlerin listesini ve uyarı yüzdesini JSON formatında döndüren API endpoint'i.
@@ -310,4 +354,121 @@ def urun_listesi(request):
         return JsonResponse({
             'success': False,
             'error': str(e)
+        }, status=500)
+
+@login_required
+def stok_hareketleri(request):
+    secilen_tarih = request.GET.get('tarih')
+    
+    if secilen_tarih:
+        try:
+            secilen_tarih = datetime.strptime(secilen_tarih, '%Y-%m-%d').date()
+        except ValueError:
+            secilen_tarih = date.today()
+    else:
+        secilen_tarih = date.today()
+    
+    hareketler = StockMovement.objects.filter(
+        islem_tarihi__date=secilen_tarih
+    ).select_related('product', 'kullanici').order_by('-islem_tarihi')
+    
+    return render(request, 'html/stok_hareketleri.html', {
+        'hareketler': hareketler,
+        'secilen_tarih': secilen_tarih,
+        'active_page': 'stok_hareketleri'
+    })
+
+def urun_bilgisi_api(request, urun_kod):
+    """
+    Ürün bilgilerini JSON formatında döndüren API endpoint'i.
+    
+    URL: /urun-bilgisi/<str:urun_kod>/
+    Method: GET
+    
+    Parametreler:
+        urun_kod (str): Ürün kodu (örn: "UMY-1")
+    
+    Başarılı Yanıt (200 OK):
+        {
+            "success": true,
+            "data": {
+                "id": 1,
+                "isim": "Ürün Adı",
+                "urun_kodu": "UMY-1",
+                "muhasebe_kodu": "6.1.123",
+                "tedarikci_kodu": "TED-123",
+                "aciklama": "Ürün açıklaması",
+                "adet": 100,
+                "asgari_adet": 10,
+                "birim": "Adet",
+                "raf_no": "A-1",
+                "marka": "Marka Adı",
+                "birim_fiyati": "150.00",
+                "kasa_tipi": "Normal",
+                "urun_tipi": "Normal",
+                "olusturulma_tarihi": "2024-01-01 10:00:00",
+                "guncelleme_tarihi": "2024-01-01 10:00:00"
+            }
+        }
+    
+    Hata Yanıtları:
+        404 Not Found:
+        {
+            "success": false,
+            "error": "Ürün bulunamadı: UMY-1"
+        }
+        
+        500 Internal Server Error:
+        {
+            "success": false,
+            "error": "Bir hata oluştu: [hata mesajı]"
+        }
+    
+    Örnek Kullanım:
+        GET /urun-bilgisi/UMY-1/
+        
+    Notlar:
+        - Tüm tarih alanları "YYYY-MM-DD HH:MM:SS" formatında döner
+        - Decimal alanlar (birim_fiyati) string olarak döner
+        - Null değerler için null döner
+    """
+    try:
+        # Ürünü bul
+        urun = Product.objects.get(urun_kodu=urun_kod)
+        
+        # Ürün bilgilerini dictionary'e çevir
+        urun_data = {
+            'id': urun.id,
+            'isim': urun.isim,
+            'urun_kodu': urun.urun_kodu,
+            'muhasebe_kodu': urun.muhasebe_kodu,
+            'tedarikci_kodu': urun.tedarikci_kodu,
+            'aciklama': urun.aciklama,
+            'adet': urun.adet,
+            'asgari_adet': urun.asgari_adet,
+            'birim': urun.birim,
+            'raf_no': urun.raf_no,
+            'marka': urun.marka,
+            'birim_fiyati': str(urun.birim_fiyati) if urun.birim_fiyati else None,
+            'kasa_tipi': urun.kasa_tipi,
+            'urun_tipi': urun.urun_tipi,
+            'olusturulma_tarihi': urun.olusturulma_tarihi.strftime('%Y-%m-%d %H:%M:%S') if urun.olusturulma_tarihi else None,
+            'guncelleme_tarihi': urun.guncelleme_tarihi.strftime('%Y-%m-%d %H:%M:%S') if urun.guncelleme_tarihi else None
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'data': urun_data
+        })
+        
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': f'Ürün bulunamadı: {urun_kod}'
+        }, status=404)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Bir hata oluştu: {str(e)}'
         }, status=500)

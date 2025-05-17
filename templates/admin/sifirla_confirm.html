@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-5">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0">İstatistikleri Sıfırlama Onayı</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Dikkat!</h5>
+                        <p>Bu işlem tüm stok hareketi kayıtlarını silecektir. Bu işlem geri alınamaz!</p>
+                        <ul>
+                            <li>Tüm stok hareketi geçmişi silinecek</li>
+                            <li>İstatistik raporları sıfırlanacak</li>
+                            <li>Mevcut stok miktarları etkilenmeyecek</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirm" required>
+                            <label class="form-check-label" for="confirm">
+                                Bu işlemin geri alınamaz olduğunu ve tüm stok hareketi kayıtlarının silineceğini anlıyorum
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin:stok_systemsettings_changelist' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> İptal
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i> İstatistikleri Sıfırla
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

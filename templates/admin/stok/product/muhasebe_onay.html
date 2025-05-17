@@ -27,7 +27,7 @@
                     <tr>
                         <td>{{ urun.urun_kodu }}</td>
                         <td>{{ urun.urun_adi }}</td>
-                        <td>{{ urun.urun_adi }}</td>
+                        <td>{{ urun.yeni_urun_adi }}</td>
                         <td>{{ urun.muhasebe_kodu }}</td>
                     </tr>
                     {% endfor %}
@@ -36,7 +36,7 @@
         </div>
         {% endif %}
 
-        <form method="post">
+        <form method="post" action="{% url 'admin:muhasebe-onay' %}">
             {% csrf_token %}
             <div class="form-row">
                 {{ form.onay.label_tag }}

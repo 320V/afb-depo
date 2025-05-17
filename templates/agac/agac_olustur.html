@@ -4,6 +4,11 @@
 {% block title %}Yeni Ürün Ağacı{% endblock %}
 
 {% block content %}
+<!-- Select2 CSS -->
+<link href="{% static 'vendor/select2/css/select2.min.css' %}" rel="stylesheet" />
+<!-- Select2 JS -->
+<script src="{% static 'vendor/select2/js/select2.min.js' %}"></script>
+
 <div class="container-fluid tree-page">
     <div class="row">
         <!-- Sidebar -->
@@ -90,11 +95,6 @@
         </main>
     </div>
 </div>
-
-<!-- Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<!-- Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <style>
     .card {

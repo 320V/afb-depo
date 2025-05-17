@@ -33,20 +33,7 @@
                         </div>
                     </div>
                 </li>
-                <li class="accordion">
-                    <a href="#" class="collapsible" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                        <i class="fas fa-sitemap mr-3"></i>Ürün Ağaçları
-                    </a>
-                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo">
-                        <div>
-                            <ul>
-                                <li><a href="{% url 'agac:agac_listesi' %}"><i class="fas fa-project-diagram mr-3"></i>Ürün Ağaçlarını Görüntüle</a></li>
-                                <li><a href="{% url 'agac:agac_olustur' %}"><i class="fas fa-plus-circle mr-3"></i>Yeni Ürün Ağacı Oluştur</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </li>
-                <li><a href="#"><i class="fas fa-chart-bar mr-3"></i>İstatistikler</a></li>
+                <li><a href="{% url 'stok_hareketleri' %}"><i class="fas fa-chart-bar mr-3"></i>İstatistikler</a></li>
             </ul>
         </div>
 
@@ -90,27 +77,43 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Burger menu toggle
-  document.querySelector('.burger').addEventListener('click', function(e) {
-    e.preventDefault();
-    document.body.classList.toggle('show-sidebar');
-    this.classList.toggle('active');
-  });
+    document.querySelector('.burger').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.body.classList.toggle('show-sidebar');
+        this.classList.toggle('active');
+    });
 
     // Initialize all collapsible elements
     var collapsibleElements = document.querySelectorAll('.collapsible');
     collapsibleElements.forEach(function(element) {
-    element.addEventListener('click', function(e) {
-      e.preventDefault();
+        element.addEventListener('click', function(e) {
+            e.preventDefault();
             var targetId = this.getAttribute('data-bs-target');
             var target = document.querySelector(targetId);
-      
+            
             // Toggle the current menu
             if (target) {
                 var bsCollapse = new bootstrap.Collapse(target, {
                     toggle: true
                 });
-        }
-      });
+            }
+        });
     });
-  });
+
+    // Add active class to current page link
+    var currentPath = window.location.pathname;
+    var navLinks = document.querySelectorAll('.nav-menu a');
+    navLinks.forEach(function(link) {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+            // If the link is in a collapsible menu, expand it
+            var parentCollapse = link.closest('.collapse');
+            if (parentCollapse) {
+                var bsCollapse = new bootstrap.Collapse(parentCollapse, {
+                    show: true
+                });
+            }
+        }
+    });
+});
 </script>
