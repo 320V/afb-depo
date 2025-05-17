@@ -76,8 +76,7 @@
             <option value="5">Miktar</option>
             <option value="6">Önceki Stok</option>
             <option value="7">Sonraki Stok</option>
-            <option value="8">İşlemi Yapan</option>
-            <option value="9">Saat</option>
+            <option value="8">Saat</option>
         </select>
         
         <input type="text" id="table-filter-input" placeholder="Arama yapın veya filtreleyin... (Büyük/küçük harf duyarsız)">
@@ -99,8 +98,7 @@
                     <th class="column6">Miktar</th>
                     <th class="column7">Önceki Stok</th>
                     <th class="column8">Sonraki Stok</th>
-                    <th class="column9">İşlemi Yapan</th>
-                    <th class="column10">Saat</th>
+                    <th class="column9">Saat</th>
                 </tr>
             </thead>
             <tbody>
@@ -120,22 +118,11 @@
                     <td class="column6">{{ hareket.miktar }}</td>
                     <td class="column7">{{ hareket.onceki_stok }}</td>
                     <td class="column8">{{ hareket.sonraki_stok }}</td>
-                    <td class="column9">
-                        {% if hareket.kullanici %}
-                            {% if hareket.kullanici.get_full_name %}
-                                {{ hareket.kullanici.get_full_name }}
-                            {% else %}
-                                {{ hareket.kullanici.username }}
-                            {% endif %}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                    <td class="column10">{{ hareket.islem_tarihi|time:"H:i" }}</td>
+                    <td class="column9">{{ hareket.islem_tarihi|time:"H:i" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="10" class="text-center">Seçilen tarih için stok hareketi bulunmamaktadır.</td>
+                    <td colspan="9" class="text-center">Seçilen tarih için stok hareketi bulunmamaktadır.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -181,8 +168,7 @@ $(document).ready(function() {
             { "width": "8%", "targets": 5 }, // Miktar
             { "width": "8%", "targets": 6 }, // Önceki Stok
             { "width": "8%", "targets": 7 }, // Sonraki Stok
-            { "width": "15%", "targets": 8 }, // İşlemi Yapan
-            { "width": "8%", "targets": 9 } // Saat
+            { "width": "8%", "targets": 8 } // Saat
         ],
         "dom": '<"top"l>rt<"bottom"ip><"clear">', // Arama kutusunu kaldır
         "initComplete": function() {

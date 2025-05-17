@@ -165,11 +165,11 @@ class UyariAyarlariAdmin(admin.ModelAdmin):
 
 @admin.register(StockMovement)
 class StockMovementAdmin(admin.ModelAdmin):
-    list_display = ('product', 'urun_kodu', 'tedarikci_kodu', 'hareket_tipi', 'miktar', 'onceki_stok', 'sonraki_stok', 'islem_tarihi', 'aciklama')
-    list_filter = ('hareket_tipi', 'islem_tarihi')
+    list_display = ('product', 'urun_kodu', 'tedarikci_kodu', 'hareket_tipi', 'miktar', 'onceki_stok', 'sonraki_stok', 'islem_tarihi', 'kullanici', 'aciklama')
+    list_filter = ('hareket_tipi', 'islem_tarihi', 'kullanici')
     search_fields = ('product__isim', 'product__urun_kodu', 'product__tedarikci_kodu', 'aciklama')
     ordering = ('-islem_tarihi',)
-    readonly_fields = ('product', 'hareket_tipi', 'miktar', 'onceki_stok', 'sonraki_stok', 'islem_tarihi', 'kullanici', 'islem_yapan', 'aciklama')
+    readonly_fields = ('product', 'hareket_tipi', 'miktar', 'onceki_stok', 'sonraki_stok', 'islem_tarihi', 'kullanici', 'aciklama')
 
     def urun_kodu(self, obj):
         return obj.product.urun_kodu
