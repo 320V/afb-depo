@@ -223,7 +223,7 @@ $(document).ready(function() {
             table.column().search('').draw();
         } else {
             table.column(parseInt(columnIndex) - 1).search($('#table-filter-input').val()).draw();
-        }
+                    }
     });
 
     $('#table-filter-input').on('keyup', function() {

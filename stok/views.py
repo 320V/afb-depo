@@ -22,7 +22,6 @@ def table_view(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-@login_required
 def urun_cikis(request):
     """
     Web arayüzündeki popup üzerinden ürün adı ve kodu seçilerek stoktan düşme yapan ve 
@@ -87,7 +86,6 @@ def urun_cikis(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-@login_required
 def stok_artis(request):
     """
     Web arayüzündeki popup üzerinden ürün adı ve kodu seçilerek stoktan artış yapan ve 
@@ -96,6 +94,7 @@ def stok_artis(request):
     try:
         data = json.loads(request.body)
         urunler = data.get('urunler', [])
+        kullanici_bilgisi = data.get('kullanici', {})
         
         if not urunler:
             return JsonResponse({
@@ -143,7 +142,8 @@ def stok_artis(request):
                     onceki_stok=onceki_stok,
                     sonraki_stok=product.adet,
                     aciklama=f"Stok artışı: {urun.get('aciklama', '')}",
-                    kullanici=request.user if request.user.is_authenticated else None
+                    kullanici=request.user if request.user.is_authenticated else None,
+                    islem_yapan=kullanici_bilgisi.get('full_name') if not request.user.is_authenticated else None
                 )
                 
                 sonuclar.append({
@@ -182,7 +182,6 @@ def stok_artis(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-@login_required
 def stok_dus(request):
     """
     Ürün koduna göre stoktan düşme yapan ve her ürün için ayrı ayrı sonuç bilgisi döndüren bir API endpoint'tir.
@@ -190,6 +189,7 @@ def stok_dus(request):
     try:
         data = json.loads(request.body)
         urunler = data.get('urunler', [])
+        kullanici_bilgisi = data.get('kullanici', {})
         
         if not urunler:
             return JsonResponse({
@@ -242,7 +242,8 @@ def stok_dus(request):
                     onceki_stok=onceki_stok,
                     sonraki_stok=product.adet,
                     aciklama=f"Stok düşüşü: {urun.get('aciklama', '')}",
-                    kullanici=request.user if request.user.is_authenticated else None
+                    kullanici=request.user if request.user.is_authenticated else None,
+                    islem_yapan=kullanici_bilgisi.get('full_name') if not request.user.is_authenticated else None
                 )
                 
                 sonuclar.append({
@@ -280,8 +281,7 @@ def stok_dus(request):
         })
 
 @require_http_methods(["GET"])
-@login_required
-def urun_adet_to_id(request, urun_id):
+def urun_adet_to_id(request, urun_kod):
     try:
         # Tüm ürünlerin kodlarını listele
         tum_urunler = Product.objects.all()
@@ -291,15 +291,15 @@ def urun_adet_to_id(request, urun_id):
         print("==========================\n")
         
         # Gelen urun_id'yi göster
-        print(f"İstenen Ürün Kodu: {urun_id}")
+        print(f"İstenen Ürün Kodu: {urun_kod}")
         
-        # Ürünü ID'ye göre bul
-        product = Product.objects.filter(urun_kodu=urun_id).first()
+        # Ürünü koda göre bul
+        product = Product.objects.filter(urun_kodu=urun_kod).first()
         
         if not product:
             return JsonResponse({
                 'success': False,
-                'error': f'Ürün kodu "{urun_id}" olan ürün bulunamadı.'
+                'error': f'Ürün kodu "{urun_kod}" olan ürün bulunamadı.'
             }, status=404)
         
         return JsonResponse({
@@ -319,7 +319,6 @@ def urun_adet_to_id(request, urun_id):
         }, status=500)
 
 @require_http_methods(["GET"])
-@login_required
 def urun_listesi(request):
     """
     Tüm ürünlerin listesini ve uyarı yüzdesini JSON formatında döndüren API endpoint'i.

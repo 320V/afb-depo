@@ -10,4 +10,5 @@ urlpatterns = [
     path('urun-adet/<int:urun_id>/', views.urun_adet_to_id, name='urun_adet_to_id'),
     path('stok-hareketleri/', views.stok_hareketleri, name='stok_hareketleri'),
     path('urun-bilgisi/<str:urun_kod>/', views.urun_bilgisi_api, name='urun_bilgisi_api'),
+    path('<str:urun_kod>/adet/', views.urun_adet_to_id, name='mobil_urun_adet'),
 ]

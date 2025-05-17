@@ -75,8 +75,8 @@ class ProductAdmin(admin.ModelAdmin):
                     })
             
             # Session'a kaydet
-            request.session['mevcut_urunler'] = mevcut_urunler
-            request.session['yeni_urunler'] = yeni_urunler
+                request.session['mevcut_urunler'] = mevcut_urunler
+                request.session['yeni_urunler'] = yeni_urunler
             
             return render(request, 'admin/stok/product/muhasebe_onay.html', {
                 'form': MuhasebeOnayForm(),
@@ -133,7 +133,7 @@ class ProductAdmin(admin.ModelAdmin):
                     self.message_user(request, f"Hata oluştu: {str(e)}", messages.ERROR)
                 
                 return redirect('admin:stok_product_changelist')
-            else:
+        else:
                 self.message_user(request, "Lütfen onay kutusunu işaretleyin.", messages.ERROR)
         
         mevcut_urunler = request.session.get('mevcut_urunler', [])
@@ -154,7 +154,7 @@ class ProductAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         extra_context['show_muhasebe_button'] = True
         return super().changelist_view(request, extra_context=extra_context)
-        
+
 @admin.register(UyariAyarlari)
 class UyariAyarlariAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
@@ -210,7 +210,7 @@ class SystemSettingsAdmin(admin.ModelAdmin):
         return render(request, 'admin/sifirla_confirm.html')
 
     def has_add_permission(self, request):
-        return False
+            return False
 
     def has_delete_permission(self, request, obj=None):
         return False

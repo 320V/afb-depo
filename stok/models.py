@@ -91,6 +91,7 @@ class StockMovement(models.Model):
     aciklama = models.TextField(verbose_name="Açıklama", blank=True, null=True)
     islem_tarihi = models.DateTimeField(verbose_name="İşlem Tarihi", auto_now_add=True)
     kullanici = models.ForeignKey(User, on_delete=models.SET_NULL, verbose_name="İşlemi Yapan", null=True, blank=True)
+    islem_yapan = models.CharField(max_length=255, verbose_name="İşlemi Yapan Kişi", null=True, blank=True)
 
     class Meta:
         verbose_name = "Stok Hareketi"

@@ -77,27 +77,27 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Burger menu toggle
-    document.querySelector('.burger').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.body.classList.toggle('show-sidebar');
-        this.classList.toggle('active');
-    });
+  document.querySelector('.burger').addEventListener('click', function(e) {
+    e.preventDefault();
+    document.body.classList.toggle('show-sidebar');
+    this.classList.toggle('active');
+  });
 
     // Initialize all collapsible elements
     var collapsibleElements = document.querySelectorAll('.collapsible');
     collapsibleElements.forEach(function(element) {
-        element.addEventListener('click', function(e) {
-            e.preventDefault();
+    element.addEventListener('click', function(e) {
+      e.preventDefault();
             var targetId = this.getAttribute('data-bs-target');
             var target = document.querySelector(targetId);
-            
+      
             // Toggle the current menu
             if (target) {
                 var bsCollapse = new bootstrap.Collapse(target, {
                     toggle: true
                 });
-            }
-        });
+        }
+      });
     });
 
     // Add active class to current page link
@@ -115,5 +115,5 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-});
+  });
 </script>
