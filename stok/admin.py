@@ -7,10 +7,16 @@ from sqlalchemy import create_engine
 import pandas as pd
 from datetime import datetime
 from django import forms
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils import timezone
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+import qrcode
+from io import BytesIO
+from PIL import Image
 
 class MuhasebeOnayForm(forms.Form):
     onay = forms.BooleanField(required=True, label="Var olan ürünlerin Muhasebe Kodu ve Ürün Adı bilgilerini güncellemek istiyor musunuz?")
@@ -47,6 +53,7 @@ class ProductAdmin(admin.ModelAdmin):
         custom_urls = [
             path('muhasebe-ekle/', self.admin_site.admin_view(self.muhasebe_ekle_view), name='muhasebe-ekle'),
             path('muhasebe-onay/', self.admin_site.admin_view(self.muhasebe_onay_view), name='muhasebe-onay'),
+            path('toplu-qr-olustur/', self.admin_site.admin_view(self.toplu_qr_olustur_view), name='toplu-qr-olustur'),
         ]
         return custom_urls + urls
 
@@ -154,6 +161,125 @@ class ProductAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         extra_context['show_muhasebe_button'] = True
         return super().changelist_view(request, extra_context=extra_context)
+
+    def toplu_qr_olustur_view(self, request):
+        if request.method == 'POST':
+            qr_per_page = int(request.POST.get('qr_per_page', 10))
+            products = Product.objects.all()
+            
+            # Create PDF
+            buffer = BytesIO()
+            p = canvas.Canvas(buffer, pagesize=A4)
+            width, height = A4
+            
+            # Calculate grid dimensions based on qr_per_page
+            qr_size = 2 * cm  # QR code size
+            margin = 1 * cm   # Page margin
+            
+            # Calculate optimal grid layout
+            available_width = width - 2 * margin
+            available_height = height - 2 * margin
+            
+            # Try to create a square-like grid
+            cols = int((qr_per_page) ** 0.5)  # Square root for initial estimate
+            rows = (qr_per_page + cols - 1) // cols  # Ceiling division
+            
+            # Adjust QR size to fit the page
+            qr_size = min(
+                available_width / cols,
+                available_height / rows
+            )
+            
+            # Generate QR codes
+            qr = qrcode.QRCode(version=1, box_size=10, border=2) 
+            current_page = 1
+            current_row = 0
+            current_col = 0
+            qr_count = 0
+            
+            # Store QR code positions for later drawing grid lines
+            qr_positions = []
+            
+            for product in products:
+                # Generate QR code
+                qr.clear()
+                qr.add_data(product.urun_kodu)
+                qr.make(fit=True)
+                qr_img = qr.make_image(fill_color="black", back_color="white")
+                
+                # Calculate position
+                x = margin + current_col * qr_size
+                y = height - margin - current_row * qr_size - qr_size
+                
+                # Store position for grid lines
+                qr_positions.append((x, y, qr_size))
+                
+                # Save QR code to BytesIO
+                qr_buffer = BytesIO()
+                qr_img.save(qr_buffer, format='PNG')
+                qr_buffer.seek(0)
+                
+                # Convert BytesIO to PIL Image
+                img = Image.open(qr_buffer)
+                
+                # Draw QR code
+                p.drawInlineImage(img, x, y, width=qr_size, height=qr_size)
+                
+                # Update position
+                current_col += 1
+                qr_count += 1
+                
+                if current_col >= cols:
+                    current_col = 0
+                    current_row += 1
+                    if current_row >= rows or qr_count >= qr_per_page:
+                        # Draw grid lines before showing new page
+                        #self._draw_grid_lines(p, qr_positions, cols, rows, qr_size)
+                        qr_positions = []  # Reset positions for new page
+                        p.showPage()
+                        current_page += 1
+                        current_row = 0
+                        qr_count = 0
+            
+            # Draw grid lines for the last page if there are any QR codes
+            """if qr_positions:
+                self._draw_grid_lines(p, qr_positions, cols, rows, qr_size)"""
+            
+            p.save()
+            buffer.seek(0)
+            
+            # Create response
+            response = HttpResponse(buffer, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="toplu_qr_kodlar.pdf"'
+            return response
+            
+        # GET request - show form
+        toplam_urun_sayisi = Product.objects.count()
+        return render(request, 'admin/stok/product/toplu_qr_olustur.html', {
+            'toplam_urun_sayisi': toplam_urun_sayisi,
+        })
+
+    def _draw_grid_lines(self, canvas, positions, cols, rows, qr_size):
+        """Draw grid lines around QR codes"""
+        if not positions:
+            return
+            
+        # Get the first position to determine starting point
+        start_x, start_y, _ = positions[0]
+        
+        # Set line properties
+        canvas.setStrokeColorRGB(0.5, 0.5, 0.5)  # Darker gray color
+        canvas.setLineWidth(0.2)  # Slightly thicker line
+        
+        # Draw vertical lines
+        for i in range(cols + 1):
+            x = start_x + (i * qr_size)
+            canvas.line(x, start_y, x, start_y + (rows * qr_size))
+        
+        # Draw horizontal lines
+        for i in range(rows + 1):
+            y = start_y + (i * qr_size)
+            canvas.line(start_x, y, start_x + (cols * qr_size), y)
 
 @admin.register(UyariAyarlari)
 class UyariAyarlariAdmin(admin.ModelAdmin):

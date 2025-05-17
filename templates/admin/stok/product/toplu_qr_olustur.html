@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <h2>Toplu QR Kod Oluşturma</h2>
+        
+        <div class="alert alert-info">
+            <p><strong>Bilgi:</strong> Sistemde toplam {{ toplam_urun_sayisi }} adet ürün bulunmaktadır.</p>
+        </div>
+
+        <form method="post" action="{% url 'admin:toplu-qr-olustur' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="qr_per_page">Sayfa Başına QR Kod Sayısı:</label>
+                    <input type="number" name="qr_per_page" id="qr_per_page" class="vTextField" min="1" max="20" value="10" required>
+                </div>
+            </div>
+            <div class="submit-row">
+                <input type="submit" value="QR Kodları Oluştur" class="default" name="_save">
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
